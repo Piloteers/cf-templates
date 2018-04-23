@@ -1,828 +1,870 @@
 {
-  "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Continuous Integration for project",
-  "Parameters": {
-    "projectName": {
-      "Type": "String",
-      "Description": "The name of the project being built.  This name will be used on a number of resources."
-    },
-    "gitHubToken": {
-      "Type": "AWS::SSM::Parameter::Value <String>",
-      "Description": "GitHub oauth token.  This user must have admin access to the repo.",
-      "NoEcho": true
-    },
-    "gitHubRepoOwner": {
-      "Type": "String",
-      "Description": "GitHub repo owner.",
-      "Default": "Piloteers"
-    },
-    "gitHubRepo": {
-      "Type": "String",
-      "Description": "GitHub git repo."
-    },
-    "stagingBranch": {
-      "Type": "String",
-      "Description": "Git branch to build off of.",
-      "Default": "develop"
-    },
-    "productionBranch": {
-      "Type": "String",
-      "Description": "Git branch to pull request into after a successful deploy.  Leave empty for no action.",
-      "Default": "master"
-    }
-  },
-  "Conditions": {
-    "PullRequestAfterDeploy": {
-      "Fn::Not": [{
-        "Fn::Equals": [{
-            "Ref": "productionBranch"
-          },
-          ""
-        ]
-      }]
-    }
-  },
-  "Resources": {
-    "DeploymentArtifactBucket": {
-      "Type": "AWS::S3::Bucket",
-      "DeletionPolicy": "Delete",
-      "Properties": {
-        "AccessControl": "Private",
-        "VersioningConfiguration": {
-          "Status": "Suspended"
-        }
-      }
-    },
-    "CodeBuildServiceRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [{
-            "Effect": "Allow",
-            "Action": [
-              "sts:AssumeRole"
-            ],
-            "Principal": {
-              "Service": [
-                "codebuild.amazonaws.com"
-              ]
-            }
-          }]
-        }
-      }
-    },
-    "CodeBuildServicePolicy": {
-      "Type": "AWS::IAM::Policy",
-      "Properties": {
-        "PolicyName": "CodeBuildServicePolicy",
-        "Roles": [{
-          "Ref": "CodeBuildServiceRole"
-        }],
-        "PolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [{
-              "Effect": "Allow",
-              "Action": [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
-              ],
-              "Resource": "arn:aws:logs:*:*:*"
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "s3:GetObject",
-                "s3:GetObjectVersion",
-                "s3:PutObject"
-              ],
-              "Resource": [{
-                  "Fn::Sub": "arn:aws:s3:::codepipeline-${AWS::Region}-*/*"
-                },
-                {
-                  "Fn::Sub": "arn:aws:s3:::${DeploymentArtifactBucket}/*"
-                }
-              ]
-            }
-          ]
-        }
-      }
-    },
-    "CodeBuildProject": {
-      "Type": "AWS::CodeBuild::Project",
-      "Properties": {
-        "Name": {
-          "Ref": "projectName"
-        },
-        "ServiceRole": {
-          "Fn::GetAtt": [
-            "CodeBuildServiceRole",
-            "Arn"
-          ]
-        },
-        "Artifacts": {
-          "Type": "CODEPIPELINE"
-        },
-        "Environment": {
-          "Type": "linuxContainer",
-          "ComputeType": "BUILD_GENERAL1_SMALL",
-          "Image": "aws/codebuild/nodejs:7.0.0",
-          "EnvironmentVariables": [{
-            "Name": "BUILD_ARTIFACT_BUCKET",
-            "Value": {
-              "Ref": "DeploymentArtifactBucket"
-            }
-          }]
-        },
-        "Source": {
-          "Type": "CODEPIPELINE"
-        },
-        "TimeoutInMinutes": 10
-      }
-    },
-    "CodePipelineServiceRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [{
-            "Effect": "Allow",
-            "Action": [
-              "sts:AssumeRole"
-            ],
-            "Principal": {
-              "Service": [
-                "codepipeline.amazonaws.com"
-              ]
-            }
-          }]
-        }
-      }
-    },
-    "CodePipelineServicePolicy": {
-      "Type": "AWS::IAM::Policy",
-      "Properties": {
-        "PolicyName": "CodePipelineServicePolicy",
-        "Roles": [{
-          "Ref": "CodePipelineServiceRole"
-        }],
-        "PolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [{
-              "Effect": "Allow",
-              "Action": [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
-              ],
-              "Resource": "arn:aws:logs:*:*:*"
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "s3:GetObject",
-                "s3:GetObjectVersion",
-                "s3:PutObject"
-              ],
-              "Resource": {
-                "Fn::Sub": "arn:aws:s3:::${DeploymentArtifactBucket}/*"
-              }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "cloudformation:CreateStack",
-                "cloudformation:DescribeStacks",
-                "cloudformation:DeleteStack",
-                "cloudformation:UpdateStack",
-                "cloudformation:CreateChangeSet",
-                "cloudformation:ExecuteChangeSet",
-                "cloudformation:DeleteChangeSet",
-                "cloudformation:DescribeChangeSet",
-                "cloudformation:ValidateTemplate"
-              ],
-              "Resource": {
-                "Fn::Sub": "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${projectName}/*"
-              }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "codebuild:BatchGetBuilds",
-                "codebuild:StartBuild",
-                "codebuild:StopBuild"
-              ],
-              "Resource": {
-                "Fn::GetAtt": [
-                  "CodeBuildProject",
-                  "Arn"
-                ]
-              }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "iam:PassRole"
-              ],
-              "Resource": {
-                "Fn::GetAtt": [
-                  "CloudFormationServiceRole",
-                  "Arn"
-                ]
-              }
-            },
-            {
-              "Fn::If": [
-                "PullRequestAfterDeploy",
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "lambda:InvokeFunction"
-                  ],
-                  "Resource": {
-                    "Fn::GetAtt": [
-                      "GitHubActionFunction",
-                      "Arn"
-                    ]
-                  }
-                },
-                {
-                  "Ref": "AWS::NoValue"
-                }
-              ]
-            },
-            {
-              "Fn::If": [
-                "PullRequestAfterDeploy",
-                {
-                  "Effect": "Allow",
-                  "Action": [
-                    "lambda:ListFunctions"
-                  ],
-                  "Resource": "*"
-                },
-                {
-                  "Ref": "AWS::NoValue"
-                }
-              ]
-            }
-          ]
-        }
-      }
-    },
-    "CloudFormationServiceRole": {
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [{
-            "Effect": "Allow",
-            "Action": [
-              "sts:AssumeRole"
-            ],
-            "Principal": {
-              "Service": [
-                "cloudformation.amazonaws.com"
-              ]
-            }
-          }]
-        }
-      }
-    },
-    "CloudFormationServicePolicy": {
-      "Type": "AWS::IAM::Policy",
-      "Properties": {
-        "PolicyName": "CloudFormationServicePolicy",
-        "Roles": [{
-          "Ref": "CloudFormationServiceRole"
-        }],
-        "PolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [{
-              "Effect": "Allow",
-              "Action": [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
-              ],
-              "Resource": "arn:aws:logs:*:*:*"
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "cloudformation:CreateChangeSet",
-                "cloudformation:ListChangeSets"
-              ],
-              "Resource": {
-                "Fn::Sub": "arn:aws:cloudformation:${AWS::Region}:aws:transform/*"
-              }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "s3:GetObject"
-              ],
-              "Resource": [{
-                  "Fn::Sub": "arn:aws:s3:::codepipeline-${AWS::Region}-*/*"
-                },
-                {
-                  "Fn::Sub": "arn:aws:s3:::${DeploymentArtifactBucket}/*"
-                }
-              ]
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "iam:AttachRolePolicy",
-                "iam:CreateRole",
-                "iam:DeleteRole",
-                "iam:DeleteRolePolicy",
-                "iam:DetachRolePolicy",
-                "iam:GetRole",
-                "iam:PassRole",
-                "iam:PutRolePolicy"
-              ],
-              "Resource": {
-                "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:role/${projectName}-*"
-              }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "lambda:AddPermission",
-                "lambda:CreateFunction",
-                "lambda:DeleteFunction",
-                "lambda:GetFunction",
-                "lambda:GetFunctionConfiguration",
-                "lambda:InvokeFunction",
-                "lambda:RemovePermission",
-                "lambda:TagResource",
-                "lambda:UntagResource",
-                "lambda:UpdateFunctionCode",
-                "lambda:UpdateFunctionConfiguration"
-              ],
-              "Resource": {
-                "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${projectName}-*"
-              }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "lambda:CreateEventSourceMapping",
-                "lambda:DeleteEventSourceMapping",
-                "lambda:GetEventSourceMapping"
-              ],
-              "Resource": "*"
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "lambda:ListTags",
-                "lambda:TagResource",
-                "lambda:UntagResource"
-              ],
-              "Resource": "*"
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "apigateway:*"
-              ],
-              "Resource": {
-                "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:${AWS::AccountId}:/*"
-              }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "dynamodb:DescribeStreams",
-                "dynamodb:DescribeStream",
-                "dynamodb:ListStreams",
-                "dynamodb:GetShardIterator",
-                "dynamodb:GetRecords"
-              ],
-              "Resource": {
-                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
-              }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "dynamodb:CreateTable",
-                "dynamodb:DeleteTable",
-                "dynamodb:DescribeTable",
-                "dynamodb:DescribeTimeToLive",
-                "dynamodb:ListTagsOfResource",
-                "dynamodb:TagResource",
-                "dynamodb:UntagResource",
-                "dynamodb:UpdateTable",
-                "dynamodb:UpdateTimeToLive"
-              ],
-              "Resource": {
-                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
-              }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "dynamodb:ListTags",
-                "dynamodb:TagResource",
-                "dynamodb:UntagResource"
-              ],
-              "Resource": {
-                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
-              }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "application-autoscaling:*"
-              ],
-              "Resource": {
-                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
-              }
-            },
-            {
-              "Effect": "Allow",
-              "Action": [
-                "s3:CreateBucket",
-                "s3:GetBucketAcl",
-                "s3:GetBucketNotification",
-                "s3:GetBucketTagging",
-                "s3:PutBucketAcl",
-                "s3:PutBucketNotification",
-                "s3:PutBucketTagging"
-              ],
-              "Resource": {
-                "Fn::Sub": "arn:aws:s3:::${projectName}-*"
-              }
-            }
-          ]
-        }
-      }
-    },
-    "CodePipeline": {
-      "Type": "AWS::CodePipeline::Pipeline",
-      "Properties": {
-        "RoleArn": {
-          "Fn::GetAtt": [
-            "CodePipelineServiceRole",
-            "Arn"
-          ]
-        },
-        "Stages": [{
-            "Name": "Source",
-            "Actions": [{
-              "Name": "Source",
-              "ActionTypeId": {
-                "Category": "Source",
-                "Owner": "ThirdParty",
-                "Version": 1,
-                "Provider": "GitHub"
-              },
-              "OutputArtifacts": [{
-                "Name": "SourceCodeOutputArtifact"
-              }],
-              "Configuration": {
-                "Owner": {
-                  "Ref": "gitHubRepoOwner"
-                },
-                "Repo": {
-                  "Ref": "gitHubRepo"
-                },
-                "Branch": {
-                  "Ref": "stagingBranch"
-                },
-                "OAuthToken": {
-                  "Ref": "gitHubToken"
-                }
-              },
-              "RunOrder": 1
-            }]
-          },
-          {
-            "Name": "Build",
-            "Actions": [{
-              "Name": "CodeBuild",
-              "ActionTypeId": {
-                "Category": "Build",
-                "Owner": "AWS",
-                "Version": 1,
-                "Provider": "CodeBuild"
-              },
-              "InputArtifacts": [{
-                "Name": "SourceCodeOutputArtifact"
-              }],
-              "OutputArtifacts": [{
-                "Name": "BuildOutputArtifact"
-              }],
-              "Configuration": {
-                "projectName": {
-                  "Ref": "projectName"
-                }
-              },
-              "RunOrder": 1
-            }]
-          },
-          {
-            "Name": "DeployToStaging",
-            "Actions": [{
-                "Name": "CreateChangeSet",
-                "ActionTypeId": {
-                  "Category": "Deploy",
-                  "Owner": "AWS",
-                  "Version": 1,
-                  "Provider": "CloudFormation"
-                },
-                "InputArtifacts": [{
-                  "Name": "BuildOutputArtifact"
-                }],
-                "Configuration": {
-                  "ActionMode": "CHANGE_SET_REPLACE",
-                  "ChangeSetName": {
-                    "Fn:Join": [
-                      "-",
-                      {
-                        "Ref": "projectName"
-                      },
-                      "Staging"
-                    ]
-
-                  },
-                  "RoleArn": {
-                    "Fn::GetAtt": [
-                      "CloudFormationServiceRole",
-                      "Arn"
-                    ]
-                  },
-                  "Capabilities": "CAPABILITY_IAM",
-                  "StackName": [
-                    "-",
-                    {
-                      "Ref": "projectName"
-                    },
-                    "Staging"
-                  ],
-                  "TemplatePath": "BuildOutputArtifact::SamDeploymentTemplate.json",
-                  "TemplateConfiguration": "BuildOutputArtifact::SamDeploymentConfigStaging.json"
-                },
-                "RunOrder": 1
-              },
-              {
-                "Name": "ExecuteChangeSet",
-                "ActionTypeId": {
-                  "Category": "Deploy",
-                  "Owner": "AWS",
-                  "Version": 1,
-                  "Provider": "CloudFormation"
-                },
-                "Configuration": {
-                  "StackName": [
-                    "-",
-                    {
-                      "Ref": "projectName"
-                    },
-                    "Staging"
-                  ],
-                  "ActionMode": "CHANGE_SET_EXECUTE",
-                  "ChangeSetName": [
-                    "-",
-                    {
-                      "Ref": "projectName"
-                    },
-                    "Staging"
-                  ]
-                },
-                "RunOrder": 2
-              },
-              {
-                "Name": "ApprovalForRelease",
-                "ActionTypeId": {
-                  "Category": "Approval",
-                  "Owner": "AWS",
-                  "Version": 1,
-                  "Provider": "Manual"
-                },
-                "RunOrder": 3
-              }
-            ]
-          },
-          {
-            "Name": "Release",
-            "Actions": [{
-                "Name": "CreateChangeSet",
-                "ActionTypeId": {
-                  "Category": "Deploy",
-                  "Owner": "AWS",
-                  "Version": 1,
-                  "Provider": "CloudFormation"
-                },
-                "InputArtifacts": [{
-                  "Name": "BuildOutputArtifact"
-                }],
-                "Configuration": {
-                  "ActionMode": "CHANGE_SET_REPLACE",
-                  "ChangeSetName": {
-                    "Fn:Join": [
-                      "-",
-                      {
-                        "Ref": "projectName"
-                      },
-                      "Production"
-                    ]
-
-                  },
-                  "RoleArn": {
-                    "Fn::GetAtt": [
-                      "CloudFormationServiceRole",
-                      "Arn"
-                    ]
-                  },
-                  "Capabilities": "CAPABILITY_IAM",
-                  "StackName": [
-                    "-",
-                    {
-                      "Ref": "projectName"
-                    },
-                    "Production"
-                  ],
-                  "TemplatePath": "BuildOutputArtifact::SamDeploymentTemplate.json",
-                  "TemplateConfiguration": "BuildOutputArtifact::SamDeploymentConfigProduction.json"
-                },
-                "RunOrder": 1
-              },
-              {
-                "Name": "ApprovalForRelease",
-                "ActionTypeId": {
-                  "Category": "Approval",
-                  "Owner": "AWS",
-                  "Version": 1,
-                  "Provider": "Manual"
-                },
-                "RunOrder": 2
-              },
-              {
-                "Name": "ExecuteChangeSet",
-                "ActionTypeId": {
-                  "Category": "Deploy",
-                  "Owner": "AWS",
-                  "Version": 1,
-                  "Provider": "CloudFormation"
-                },
-                "Configuration": {
-                  "StackName": [
-                    "-",
-                    {
-                      "Ref": "projectName"
-                    },
-                    "Production"
-                  ],
-                  "ActionMode": "CHANGE_SET_EXECUTE",
-                  "ChangeSetName": [
-                    "-",
-                    {
-                      "Ref": "projectName"
-                    },
-                    "Production"
-                  ]
-                },
-                "RunOrder": 3
-              }
-            ]
-          },
-          {
-            "Fn::If": [
-              "PullRequestAfterDeploy",
-              {
-                "Name": "PostRelease",
-                "Actions": [{
-                  "Name": "GitHubPullRequest",
-                  "ActionTypeId": {
-                    "Category": "Invoke",
-                    "Owner": "AWS",
-                    "Version": 1,
-                    "Provider": "Lambda"
-                  },
-                  "Configuration": {
-                    "FunctionName": {
-                      "Ref": "GitHubActionFunction"
-                    }
-                  },
-                  "RunOrder": 1
-                }]
-              },
-              {
-                "Ref": "AWS::NoValue"
-              }
-            ]
-          }
-        ],
-        "ArtifactStore": {
-          "Type": "S3",
-          "Location": {
-            "Ref": "DeploymentArtifactBucket"
-          }
-        },
-        "Name": {
-          "Ref": "projectName"
-        }
-      }
-    },
-    "GitHubActionServiceRole": {
-      "Condition": "PullRequestAfterDeploy",
-      "Type": "AWS::IAM::Role",
-      "Properties": {
-        "AssumeRolePolicyDocument": {
-          "Version": "2012-10-17",
-          "Statement": [{
-            "Effect": "Allow",
-            "Action": [
-              "sts:AssumeRole"
-            ],
-            "Principal": {
-              "Service": [
-                "lambda.amazonaws.com"
-              ]
-            }
-          }]
-        },
-        "Policies": [{
-          "PolicyName": "GitHubActionServicePolicy",
-          "PolicyDocument": {
-            "Version": "2012-10-17",
-            "Statement": [{
-                "Effect": "Allow",
-                "Action": [
-                  "logs:CreateLogGroup",
-                  "logs:CreateLogStream",
-                  "logs:PutLogEvents"
-                ],
-                "Resource": "arn:aws:logs:*:*:*"
-              },
-              {
-                "Effect": "Allow",
-                "Action": [
-                  "kms:decrypt"
-                ],
-                "Resource": {
-                  "Fn::GetAtt": [
-                    "StackKey",
-                    "Arn"
-                  ]
-                }
-              },
-              {
-                "Effect": "Allow",
-                "Action": [
-                  "codepipeline:AcknowledgeJob",
-                  "codepipeline:PutJobSuccessResult",
-                  "codepipeline:PutJobFailureResult"
-                ],
-                "Resource": "*"
-              }
-            ]
-          }
-        }]
-      }
-    },
-    "GitHubActionFunction": {
-      "Condition": "PullRequestAfterDeploy",
-      "Type": "AWS::Lambda::Function",
-      "Properties": {
-        "Handler": "index.handler",
-        "Role": {
-          "Fn::GetAtt": [
-            "GitHubActionServiceRole",
-            "Arn"
-          ]
-        },
-        "Code": {
-          "S3Bucket": "piloteers-resources",
-          "S3Key": "cloudformation/codepipeline-github-action.zip"
-        },
-        "Runtime": "nodejs6.10",
-        "Timeout": 120,
-        "Environment": {
-          "Variables": {
-            "GITHUB_REPO_OWNER": {
-              "Ref": "gitHubRepoOwner"
-            },
-            "GITHUB_REPO": {
-              "Ref": "gitHubRepo"
-            },
-            "GITHUB_SOURCE_BRANCH": {
-              "Ref": "stagingBranch"
-            },
-            "GITHUB_DEST_BRANCH": {
-              "Ref": "productionBranch"
-            },
-            "GITHUB_OAUTH": {
-              "Ref": "gitHubToken"
-            }
-          }
-        }
-      }
-    } 
-  }
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Continuous Integration for project",
+	"Parameters": {
+		"projectName": {
+			"Type": "String",
+			"Description": "The name of the project being built.  This name will be used on a number of resources."
+		},
+		"gitHubToken": {
+			"Type": "AWS::SSM::Parameter::Value<String>",
+			"Description": "GitHub oauth token.  This user must have admin access to the repo.",
+			"NoEcho": true
+		},
+		"gitHubRepoOwner": {
+			"Type": "String",
+			"Description": "GitHub repo owner.",
+			"Default": "Piloteers"
+		},
+		"gitHubRepo": {
+			"Type": "String",
+			"Description": "GitHub git repo."
+		},
+		"stagingBranch": {
+			"Type": "String",
+			"Description": "Git branch to build off of.",
+			"Default": "develop"
+		},
+		"productionBranch": {
+			"Type": "String",
+			"Description": "Git branch to pull request into after a successful deploy.  Leave empty for no action.",
+			"Default": "master"
+		}
+	},
+	"Conditions": {
+		"PullRequestAfterDeploy": {
+			"Fn::Not": [
+				{
+					"Fn::Equals": [
+						{
+							"Ref": "productionBranch"
+						},
+						""
+					]
+				}
+			]
+		}
+	},
+	"Resources": {
+		"DeploymentArtifactBucket": {
+			"Type": "AWS::S3::Bucket",
+			"DeletionPolicy": "Delete",
+			"Properties": {
+				"AccessControl": "Private",
+				"VersioningConfiguration": {
+					"Status": "Suspended"
+				}
+			}
+		},
+		"CodeBuildServiceRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"sts:AssumeRole"
+							],
+							"Principal": {
+								"Service": [
+									"codebuild.amazonaws.com"
+								]
+							}
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildServicePolicy": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "CodeBuildServicePolicy",
+				"Roles": [
+					{
+						"Ref": "CodeBuildServiceRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"logs:CreateLogGroup",
+								"logs:CreateLogStream",
+								"logs:PutLogEvents"
+							],
+							"Resource": "arn:aws:logs:*:*:*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"s3:GetObject",
+								"s3:GetObjectVersion",
+								"s3:PutObject"
+							],
+							"Resource": [
+								{
+									"Fn::Sub": "arn:aws:s3:::codepipeline-${AWS::Region}-*/*"
+								},
+								{
+									"Fn::Sub": "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		"CodeBuildProject": {
+			"Type": "AWS::CodeBuild::Project",
+			"Properties": {
+				"Name": {
+					"Ref": "projectName"
+				},
+				"ServiceRole": {
+					"Fn::GetAtt": [
+						"CodeBuildServiceRole",
+						"Arn"
+					]
+				},
+				"Artifacts": {
+					"Type": "CODEPIPELINE"
+				},
+				"Environment": {
+					"Type": "linuxContainer",
+					"ComputeType": "BUILD_GENERAL1_SMALL",
+					"Image": "aws/codebuild/nodejs:7.0.0",
+					"EnvironmentVariables": [
+						{
+							"Name": "BUILD_ARTIFACT_BUCKET",
+							"Value": {
+								"Ref": "DeploymentArtifactBucket"
+							}
+						}
+					]
+				},
+				"Source": {
+					"Type": "CODEPIPELINE"
+				},
+				"TimeoutInMinutes": 10
+			}
+		},
+		"CodePipelineServiceRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"sts:AssumeRole"
+							],
+							"Principal": {
+								"Service": [
+									"codepipeline.amazonaws.com"
+								]
+							}
+						}
+					]
+				}
+			}
+		},
+		"CodePipelineServicePolicy": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "CodePipelineServicePolicy",
+				"Roles": [
+					{
+						"Ref": "CodePipelineServiceRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"logs:CreateLogGroup",
+								"logs:CreateLogStream",
+								"logs:PutLogEvents"
+							],
+							"Resource": "arn:aws:logs:*:*:*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"s3:GetObject",
+								"s3:GetObjectVersion",
+								"s3:PutObject"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"cloudformation:CreateStack",
+								"cloudformation:DescribeStacks",
+								"cloudformation:DeleteStack",
+								"cloudformation:UpdateStack",
+								"cloudformation:CreateChangeSet",
+								"cloudformation:ExecuteChangeSet",
+								"cloudformation:DeleteChangeSet",
+								"cloudformation:DescribeChangeSet",
+								"cloudformation:ValidateTemplate"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${projectName}/*"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"codebuild:BatchGetBuilds",
+								"codebuild:StartBuild",
+								"codebuild:StopBuild"
+							],
+							"Resource": {
+								"Fn::GetAtt": [
+									"CodeBuildProject",
+									"Arn"
+								]
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"iam:PassRole"
+							],
+							"Resource": {
+								"Fn::GetAtt": [
+									"CloudFormationServiceRole",
+									"Arn"
+								]
+							}
+						},
+						{
+							"Fn::If": [
+								"PullRequestAfterDeploy",
+								{
+									"Effect": "Allow",
+									"Action": [
+										"lambda:InvokeFunction"
+									],
+									"Resource": {
+										"Fn::GetAtt": [
+											"GitHubActionFunction",
+											"Arn"
+										]
+									}
+								},
+								{
+									"Ref": "AWS::NoValue"
+								}
+							]
+						},
+						{
+							"Fn::If": [
+								"PullRequestAfterDeploy",
+								{
+									"Effect": "Allow",
+									"Action": [
+										"lambda:ListFunctions"
+									],
+									"Resource": "*"
+								},
+								{
+									"Ref": "AWS::NoValue"
+								}
+							]
+						}
+					]
+				}
+			}
+		},
+		"CloudFormationServiceRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"sts:AssumeRole"
+							],
+							"Principal": {
+								"Service": [
+									"cloudformation.amazonaws.com"
+								]
+							}
+						}
+					]
+				}
+			}
+		},
+		"CloudFormationServicePolicy": {
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "CloudFormationServicePolicy",
+				"Roles": [
+					{
+						"Ref": "CloudFormationServiceRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"logs:CreateLogGroup",
+								"logs:CreateLogStream",
+								"logs:PutLogEvents"
+							],
+							"Resource": "arn:aws:logs:*:*:*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"cloudformation:CreateChangeSet",
+								"cloudformation:ListChangeSets"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:cloudformation:${AWS::Region}:aws:transform/*"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"s3:GetObject"
+							],
+							"Resource": [
+								{
+									"Fn::Sub": "arn:aws:s3:::codepipeline-${AWS::Region}-*/*"
+								},
+								{
+									"Fn::Sub": "arn:aws:s3:::${DeploymentArtifactBucket}/*"
+								}
+							]
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"iam:AttachRolePolicy",
+								"iam:CreateRole",
+								"iam:DeleteRole",
+								"iam:DeleteRolePolicy",
+								"iam:DetachRolePolicy",
+								"iam:GetRole",
+								"iam:PassRole",
+								"iam:PutRolePolicy"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:iam::${AWS::AccountId}:role/${projectName}-*"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"lambda:AddPermission",
+								"lambda:CreateFunction",
+								"lambda:DeleteFunction",
+								"lambda:GetFunction",
+								"lambda:GetFunctionConfiguration",
+								"lambda:InvokeFunction",
+								"lambda:RemovePermission",
+								"lambda:TagResource",
+								"lambda:UntagResource",
+								"lambda:UpdateFunctionCode",
+								"lambda:UpdateFunctionConfiguration"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${projectName}-*"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"lambda:CreateEventSourceMapping",
+								"lambda:DeleteEventSourceMapping",
+								"lambda:GetEventSourceMapping"
+							],
+							"Resource": "*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"lambda:ListTags",
+								"lambda:TagResource",
+								"lambda:UntagResource"
+							],
+							"Resource": "*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"apigateway:*"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:apigateway:${AWS::Region}:${AWS::AccountId}:/*"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"dynamodb:DescribeStreams",
+								"dynamodb:DescribeStream",
+								"dynamodb:ListStreams",
+								"dynamodb:GetShardIterator",
+								"dynamodb:GetRecords"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"dynamodb:CreateTable",
+								"dynamodb:DeleteTable",
+								"dynamodb:DescribeTable",
+								"dynamodb:DescribeTimeToLive",
+								"dynamodb:ListTagsOfResource",
+								"dynamodb:TagResource",
+								"dynamodb:UntagResource",
+								"dynamodb:UpdateTable",
+								"dynamodb:UpdateTimeToLive"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"dynamodb:ListTags",
+								"dynamodb:TagResource",
+								"dynamodb:UntagResource"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"application-autoscaling:*"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"s3:CreateBucket",
+								"s3:GetBucketAcl",
+								"s3:GetBucketNotification",
+								"s3:GetBucketTagging",
+								"s3:PutBucketAcl",
+								"s3:PutBucketNotification",
+								"s3:PutBucketTagging"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:s3:::${projectName}-*"
+							}
+						}
+					]
+				}
+			}
+		},
+		"CodePipeline": {
+			"Type": "AWS::CodePipeline::Pipeline",
+			"Properties": {
+				"RoleArn": {
+					"Fn::GetAtt": [
+						"CodePipelineServiceRole",
+						"Arn"
+					]
+				},
+				"Stages": [
+					{
+						"Name": "Source",
+						"Actions": [
+							{
+								"Name": "Source",
+								"ActionTypeId": {
+									"Category": "Source",
+									"Owner": "ThirdParty",
+									"Version": 1,
+									"Provider": "GitHub"
+								},
+								"OutputArtifacts": [
+									{
+										"Name": "SourceCodeOutputArtifact"
+									}
+								],
+								"Configuration": {
+									"Owner": {
+										"Ref": "gitHubRepoOwner"
+									},
+									"Repo": {
+										"Ref": "gitHubRepo"
+									},
+									"Branch": {
+										"Ref": "stagingBranch"
+									},
+									"OAuthToken": {
+										"Ref": "gitHubToken"
+									}
+								},
+								"RunOrder": 1
+							}
+						]
+					},
+					{
+						"Name": "Build",
+						"Actions": [
+							{
+								"Name": "CodeBuild",
+								"ActionTypeId": {
+									"Category": "Build",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "CodeBuild"
+								},
+								"InputArtifacts": [
+									{
+										"Name": "SourceCodeOutputArtifact"
+									}
+								],
+								"OutputArtifacts": [
+									{
+										"Name": "BuildOutputArtifact"
+									}
+								],
+								"Configuration": {
+									"projectName": {
+										"Ref": "projectName"
+									}
+								},
+								"RunOrder": 1
+							}
+						]
+					},
+					{
+						"Name": "DeployToStaging",
+						"Actions": [
+							{
+								"Name": "CreateChangeSet",
+								"ActionTypeId": {
+									"Category": "Deploy",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "CloudFormation"
+								},
+								"InputArtifacts": [
+									{
+										"Name": "BuildOutputArtifact"
+									}
+								],
+								"Configuration": {
+									"ActionMode": "CHANGE_SET_REPLACE",
+									"ChangeSetName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"Staging"
+											]
+										]
+									},
+									"RoleArn": {
+										"Fn::GetAtt": [
+											"CloudFormationServiceRole",
+											"Arn"
+										]
+									},
+									"Capabilities": "CAPABILITY_IAM",
+									"StackName": { 
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"Staging"
+											]
+										]
+									},
+									"TemplatePath": "BuildOutputArtifact::SamDeploymentTemplate.json",
+									"TemplateConfiguration": "BuildOutputArtifact::SamDeploymentConfigStaging.json"
+								},
+								"RunOrder": 1
+							},
+							{
+								"Name": "ExecuteChangeSet",
+								"ActionTypeId": {
+									"Category": "Deploy",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "CloudFormation"
+								},
+								"Configuration": {
+									"StackName": [
+										"-",
+										{
+											"Ref": "projectName"
+										},
+										"Staging"
+									],
+									"ActionMode": "CHANGE_SET_EXECUTE",
+									"ChangeSetName": [
+										"-",
+										{
+											"Ref": "projectName"
+										},
+										"Staging"
+									]
+								},
+								"RunOrder": 2
+							},
+							{
+								"Name": "ApprovalForRelease",
+								"ActionTypeId": {
+									"Category": "Approval",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "Manual"
+								},
+								"RunOrder": 3
+							}
+						]
+					},
+					{
+						"Name": "Release",
+						"Actions": [
+							{
+								"Name": "CreateChangeSet",
+								"ActionTypeId": {
+									"Category": "Deploy",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "CloudFormation"
+								},
+								"InputArtifacts": [
+									{
+										"Name": "BuildOutputArtifact"
+									}
+								],
+								"Configuration": {
+									"ActionMode": "CHANGE_SET_REPLACE",
+									"ChangeSetName": {
+										"Fn::Join": [
+											"-", [
+												{
+													"Ref": "projectName"
+												},
+												"Production"
+											]
+										]
+									},
+									"RoleArn": {
+										"Fn::GetAtt": [
+											"CloudFormationServiceRole",
+											"Arn"
+										]
+									},
+									"Capabilities": "CAPABILITY_IAM",
+									"StackName": {
+										"Fn::Join": [
+											"-", [
+												{
+													"Ref": "projectName"
+												},
+												"Production"
+											]
+										]
+									},
+									"TemplatePath": "BuildOutputArtifact::SamDeploymentTemplate.json",
+									"TemplateConfiguration": "BuildOutputArtifact::SamDeploymentConfigProduction.json"
+								},
+								"RunOrder": 1
+							},
+							{
+								"Name": "ApprovalForRelease",
+								"ActionTypeId": {
+									"Category": "Approval",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "Manual"
+								},
+								"RunOrder": 2
+							},
+							{
+								"Name": "ExecuteChangeSet",
+								"ActionTypeId": {
+									"Category": "Deploy",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "CloudFormation"
+								},
+								"Configuration": {
+									"StackName": [
+										"-",
+										{
+											"Ref": "projectName"
+										},
+										"Production"
+									],
+									"ActionMode": "CHANGE_SET_EXECUTE",
+									"ChangeSetName": [
+										"-",
+										{
+											"Ref": "projectName"
+										},
+										"Production"
+									]
+								},
+								"RunOrder": 3
+							}
+						]
+					},
+					{
+						"Fn::If": [
+							"PullRequestAfterDeploy",
+							{
+								"Name": "PostRelease",
+								"Actions": [
+									{
+										"Name": "GitHubPullRequest",
+										"ActionTypeId": {
+											"Category": "Invoke",
+											"Owner": "AWS",
+											"Version": 1,
+											"Provider": "Lambda"
+										},
+										"Configuration": {
+											"FunctionName": {
+												"Ref": "GitHubActionFunction"
+											}
+										},
+										"RunOrder": 1
+									}
+								]
+							},
+							{
+								"Ref": "AWS::NoValue"
+							}
+						]
+					}
+				],
+				"ArtifactStore": {
+					"Type": "S3",
+					"Location": {
+						"Ref": "DeploymentArtifactBucket"
+					}
+				},
+				"Name": {
+					"Ref": "projectName"
+				}
+			}
+		},
+		"GitHubActionServiceRole": {
+			"Condition": "PullRequestAfterDeploy",
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"sts:AssumeRole"
+							],
+							"Principal": {
+								"Service": [
+									"lambda.amazonaws.com"
+								]
+							}
+						}
+					]
+				},
+				"Policies": [
+					{
+						"PolicyName": "GitHubActionServicePolicy",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"logs:CreateLogGroup",
+										"logs:CreateLogStream",
+										"logs:PutLogEvents"
+									],
+									"Resource": "arn:aws:logs:*:*:*"
+								},
+								{
+									"Effect": "Allow",
+									"Action": [
+										"codepipeline:AcknowledgeJob",
+										"codepipeline:PutJobSuccessResult",
+										"codepipeline:PutJobFailureResult"
+									],
+									"Resource": "*"
+								}
+							]
+						}
+					}
+				]
+			}
+		},
+		"GitHubActionFunction": {
+			"Condition": "PullRequestAfterDeploy",
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+				"Handler": "index.handler",
+				"Role": {
+					"Fn::GetAtt": [
+						"GitHubActionServiceRole",
+						"Arn"
+					]
+				},
+				"Code": {
+					"S3Bucket": "piloteers-resources",
+					"S3Key": "cloudformation/codepipeline-github-action.zip"
+				},
+				"Runtime": "nodejs6.10",
+				"Timeout": 120,
+				"Environment": {
+					"Variables": {
+						"GITHUB_REPO_OWNER": {
+							"Ref": "gitHubRepoOwner"
+						},
+						"GITHUB_REPO": {
+							"Ref": "gitHubRepo"
+						},
+						"GITHUB_SOURCE_BRANCH": {
+							"Ref": "stagingBranch"
+						},
+						"GITHUB_DEST_BRANCH": {
+							"Ref": "productionBranch"
+						},
+						"GITHUB_OAUTH": {
+							"Ref": "gitHubToken"
+						}
+					}
+				}
+			}
+		}
+	}
 }
