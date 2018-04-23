@@ -2,30 +2,30 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Continuous Integration for project",
   "Parameters": {
-    "ProjectName": {
+    "projectName": {
       "Type": "String",
       "Description": "The name of the project being built.  This name will be used on a number of resources."
     },
-    "GitHubOAuthToken": {
+    "gitHubToken": {
       "Type": "AWS::SSM::Parameter::Value <String>",
       "Description": "GitHub oauth token.  This user must have admin access to the repo.",
       "NoEcho": true
     },
-    "GitHubRepoOwner": {
+    "gitHubRepoOwner": {
       "Type": "String",
       "Description": "GitHub repo owner.",
       "Default": "Piloteers"
     },
-    "GitHubRepo": {
+    "gitHubRepo": {
       "Type": "String",
       "Description": "GitHub git repo."
     },
-    "GitHubBranch": {
+    "stagingBranch": {
       "Type": "String",
       "Description": "Git branch to build off of.",
       "Default": "develop"
     },
-    "GitHubBranchDest": {
+    "productionBranch": {
       "Type": "String",
       "Description": "Git branch to pull request into after a successful deploy.  Leave empty for no action.",
       "Default": "master"
@@ -35,7 +35,7 @@
     "PullRequestAfterDeploy": {
       "Fn::Not": [{
         "Fn::Equals": [{
-            "Ref": "GitHubBranchDest"
+            "Ref": "productionBranch"
           },
           ""
         ]
@@ -113,7 +113,7 @@
       "Type": "AWS::CodeBuild::Project",
       "Properties": {
         "Name": {
-          "Ref": "ProjectName"
+          "Ref": "projectName"
         },
         "ServiceRole": {
           "Fn::GetAtt": [
@@ -203,7 +203,7 @@
                 "cloudformation:ValidateTemplate"
               ],
               "Resource": {
-                "Fn::Sub": "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ProjectName}/*"
+                "Fn::Sub": "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${projectName}/*"
               }
             },
             {
@@ -344,7 +344,7 @@
                 "iam:PutRolePolicy"
               ],
               "Resource": {
-                "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:role/${ProjectName}-*"
+                "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:role/${projectName}-*"
               }
             },
             {
@@ -363,7 +363,7 @@
                 "lambda:UpdateFunctionConfiguration"
               ],
               "Resource": {
-                "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${ProjectName}-*"
+                "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${projectName}-*"
               }
             },
             {
@@ -403,7 +403,7 @@
                 "dynamodb:GetRecords"
               ],
               "Resource": {
-                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProjectName}-*"
+                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
               }
             },
             {
@@ -420,7 +420,7 @@
                 "dynamodb:UpdateTimeToLive"
               ],
               "Resource": {
-                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProjectName}-*"
+                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
               }
             },
             {
@@ -431,7 +431,7 @@
                 "dynamodb:UntagResource"
               ],
               "Resource": {
-                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProjectName}-*"
+                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
               }
             },
             {
@@ -440,7 +440,7 @@
                 "application-autoscaling:*"
               ],
               "Resource": {
-                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ProjectName}-*"
+                "Fn::Sub": "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${projectName}-*"
               }
             },
             {
@@ -455,7 +455,7 @@
                 "s3:PutBucketTagging"
               ],
               "Resource": {
-                "Fn::Sub": "arn:aws:s3:::${ProjectName}-*"
+                "Fn::Sub": "arn:aws:s3:::${projectName}-*"
               }
             }
           ]
@@ -486,16 +486,16 @@
               }],
               "Configuration": {
                 "Owner": {
-                  "Ref": "GitHubRepoOwner"
+                  "Ref": "gitHubRepoOwner"
                 },
                 "Repo": {
-                  "Ref": "GitHubRepo"
+                  "Ref": "gitHubRepo"
                 },
                 "Branch": {
-                  "Ref": "GitHubBranch"
+                  "Ref": "stagingBranch"
                 },
                 "OAuthToken": {
-                  "Ref": "GitHubOAuthToken"
+                  "Ref": "gitHubToken"
                 }
               },
               "RunOrder": 1
@@ -518,8 +518,8 @@
                 "Name": "BuildOutputArtifact"
               }],
               "Configuration": {
-                "ProjectName": {
-                  "Ref": "ProjectName"
+                "projectName": {
+                  "Ref": "projectName"
                 }
               },
               "RunOrder": 1
@@ -544,7 +544,7 @@
                     "Fn:Join": [
                       "-",
                       {
-                        "Ref": "ProjectName"
+                        "Ref": "projectName"
                       },
                       "Staging"
                     ]
@@ -560,7 +560,7 @@
                   "StackName": [
                     "-",
                     {
-                      "Ref": "ProjectName"
+                      "Ref": "projectName"
                     },
                     "Staging"
                   ],
@@ -581,7 +581,7 @@
                   "StackName": [
                     "-",
                     {
-                      "Ref": "ProjectName"
+                      "Ref": "projectName"
                     },
                     "Staging"
                   ],
@@ -589,7 +589,7 @@
                   "ChangeSetName": [
                     "-",
                     {
-                      "Ref": "ProjectName"
+                      "Ref": "projectName"
                     },
                     "Staging"
                   ]
@@ -627,7 +627,7 @@
                     "Fn:Join": [
                       "-",
                       {
-                        "Ref": "ProjectName"
+                        "Ref": "projectName"
                       },
                       "Production"
                     ]
@@ -643,7 +643,7 @@
                   "StackName": [
                     "-",
                     {
-                      "Ref": "ProjectName"
+                      "Ref": "projectName"
                     },
                     "Production"
                   ],
@@ -674,7 +674,7 @@
                   "StackName": [
                     "-",
                     {
-                      "Ref": "ProjectName"
+                      "Ref": "projectName"
                     },
                     "Production"
                   ],
@@ -682,7 +682,7 @@
                   "ChangeSetName": [
                     "-",
                     {
-                      "Ref": "ProjectName"
+                      "Ref": "projectName"
                     },
                     "Production"
                   ]
@@ -725,7 +725,7 @@
           }
         },
         "Name": {
-          "Ref": "ProjectName"
+          "Ref": "projectName"
         }
       }
     },
@@ -806,19 +806,19 @@
         "Environment": {
           "Variables": {
             "GITHUB_REPO_OWNER": {
-              "Ref": "GitHubRepoOwner"
+              "Ref": "gitHubRepoOwner"
             },
             "GITHUB_REPO": {
-              "Ref": "GitHubRepo"
+              "Ref": "gitHubRepo"
             },
             "GITHUB_SOURCE_BRANCH": {
-              "Ref": "GitHubBranch"
+              "Ref": "stagingBranch"
             },
             "GITHUB_DEST_BRANCH": {
-              "Ref": "GitHubBranchDest"
+              "Ref": "productionBranch"
             },
             "GITHUB_OAUTH": {
-              "Ref": "GitHubOAuthToken"
+              "Ref": "gitHubToken"
             }
           }
         }
