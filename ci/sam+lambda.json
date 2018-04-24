@@ -4,11 +4,11 @@
 	"Parameters": {
 		"projectName": {
 			"Type": "String",
-			"Description": "The name of the project being built.  This name will be used on a number of resources."
+			"Description": "The name of the project being built. This name will be used on a number of resources."
 		},
 		"gitHubToken": {
 			"Type": "AWS::SSM::Parameter::Value<String>",
-			"Description": "GitHub oauth token.  This user must have admin access to the repo.",
+			"Description": "GitHub oauth token. This user must have admin access to the repo.",
 			"NoEcho": true
 		},
 		"gitHubRepoOwner": {
@@ -27,7 +27,7 @@
 		},
 		"productionBranch": {
 			"Type": "String",
-			"Description": "Git branch to pull request into after a successful deploy.  Leave empty for no action.",
+			"Description": "Git branch to pull request into after a successful deploy. Leave empty for no action.",
 			"Default": "master"
 		}
 	},
@@ -50,6 +50,17 @@
 			"Type": "AWS::S3::Bucket",
 			"DeletionPolicy": "Delete",
 			"Properties": {
+				"BucketName": {
+					"Fn::Join": [
+						"_",
+						[
+							{
+								"Ref": "projectName"
+							},
+							"bucket"
+						]
+					]
+				},
 				"AccessControl": "Private",
 				"VersioningConfiguration": {
 					"Status": "Suspended"
@@ -61,7 +72,7 @@
 			"Properties": {
 				"RoleName": {
 					"Fn::Join": [
-						"-",
+						"_",
 						[
 							{
 								"Ref": "projectName"
@@ -93,7 +104,7 @@
 			"Properties": {
 				"PolicyName": {
 					"Fn::Join": [
-						"-",
+						"_",
 						[
 							{
 								"Ref": "projectName"
@@ -144,7 +155,7 @@
 			"Properties": {
 				"Name": {
 					"Fn::Join": [
-						"-",
+						"_",
 						[
 							{
 								"Ref": "projectName"
@@ -186,7 +197,7 @@
 			"Properties": {
 				"RoleName": {
 					"Fn::Join": [
-						"-",
+						"_",
 						[
 							{
 								"Ref": "projectName"
@@ -218,7 +229,7 @@
 			"Properties": {
 				"PolicyName": {
 					"Fn::Join": [
-						"-",
+						"_",
 						[
 							{
 								"Ref": "projectName"
@@ -342,7 +353,7 @@
 			"Properties": {
 				"RoleName": {
 					"Fn::Join": [
-						"-",
+						"_",
 						[
 							{
 								"Ref": "projectName"
@@ -374,7 +385,7 @@
 			"Properties": {
 				"PolicyName": {
 					"Fn::Join": [
-						"-",
+						"_",
 						[
 							{
 								"Ref": "projectName"
@@ -560,7 +571,7 @@
 			"Properties": {
 				"Name": {
 					"Fn::Join": [
-						"-",
+						"_",
 						[
 							{
 								"Ref": "projectName"
@@ -660,7 +671,7 @@
 									"ActionMode": "CHANGE_SET_REPLACE",
 									"ChangeSetName": {
 										"Fn::Join": [
-											"-",
+											"_",
 											[
 												{
 													"Ref": "projectName"
@@ -678,7 +689,7 @@
 									"Capabilities": "CAPABILITY_IAM",
 									"StackName": { 
 										"Fn::Join": [
-											"-",
+											"_",
 											[
 												{
 													"Ref": "projectName"
@@ -703,7 +714,7 @@
 								"Configuration": {
 									"StackName": {
 										"Fn::Join": [
-											"-",
+											"_",
 											[
 												{
 													"Ref": "projectName"
@@ -715,7 +726,7 @@
 									"ActionMode": "CHANGE_SET_EXECUTE",
 									"ChangeSetName": {
 										"Fn::Join": [
-											"-",
+											"_",
 											[
 												{
 													"Ref": "projectName"
@@ -759,7 +770,7 @@
 									"ActionMode": "CHANGE_SET_REPLACE",
 									"ChangeSetName": {
 										"Fn::Join": [
-											"-", [
+											"_", [
 												{
 													"Ref": "projectName"
 												},
@@ -776,7 +787,7 @@
 									"Capabilities": "CAPABILITY_IAM",
 									"StackName": {
 										"Fn::Join": [
-											"-", [
+											"_", [
 												{
 													"Ref": "projectName"
 												},
@@ -810,7 +821,7 @@
 								"Configuration": {
 									"StackName": {
 										"Fn::Join": [
-											"-",
+											"_",
 											[
 												{
 													"Ref": "projectName"
@@ -822,7 +833,7 @@
 									"ActionMode": "CHANGE_SET_EXECUTE",
 									"ChangeSetName": {
 										"Fn::Join": [
-											"-",
+											"_",
 											[
 												{
 													"Ref": "projectName"
@@ -879,7 +890,7 @@
 			"Properties": {
 				"RoleName": {
 					"Fn::Join": [
-						"-",
+						"_",
 						[
 							{
 								"Ref": "projectName"
@@ -940,7 +951,7 @@
 			"Properties": {
 				"FunctionName": {
 					"Fn::Join": [
-						"-",
+						"_",
 						[
 							{
 								"Ref": "projectName"
