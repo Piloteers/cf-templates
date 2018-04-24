@@ -52,7 +52,7 @@
 			"Properties": {
 				"BucketName": {
 					"Fn::Join": [
-						"_",
+						"-",
 						[
 							{
 								"Ref": "projectName"
@@ -72,7 +72,7 @@
 			"Properties": {
 				"RoleName": {
 					"Fn::Join": [
-						"_",
+						"-",
 						[
 							{
 								"Ref": "projectName"
@@ -104,7 +104,7 @@
 			"Properties": {
 				"PolicyName": {
 					"Fn::Join": [
-						"_",
+						"-",
 						[
 							{
 								"Ref": "projectName"
@@ -155,7 +155,7 @@
 			"Properties": {
 				"Name": {
 					"Fn::Join": [
-						"_",
+						"-",
 						[
 							{
 								"Ref": "projectName"
@@ -197,7 +197,7 @@
 			"Properties": {
 				"RoleName": {
 					"Fn::Join": [
-						"_",
+						"-",
 						[
 							{
 								"Ref": "projectName"
@@ -229,7 +229,7 @@
 			"Properties": {
 				"PolicyName": {
 					"Fn::Join": [
-						"_",
+						"-",
 						[
 							{
 								"Ref": "projectName"
@@ -353,7 +353,7 @@
 			"Properties": {
 				"RoleName": {
 					"Fn::Join": [
-						"_",
+						"-",
 						[
 							{
 								"Ref": "projectName"
@@ -385,7 +385,7 @@
 			"Properties": {
 				"PolicyName": {
 					"Fn::Join": [
-						"_",
+						"-",
 						[
 							{
 								"Ref": "projectName"
@@ -571,7 +571,7 @@
 			"Properties": {
 				"Name": {
 					"Fn::Join": [
-						"_",
+						"-",
 						[
 							{
 								"Ref": "projectName"
@@ -671,7 +671,7 @@
 									"ActionMode": "CHANGE_SET_REPLACE",
 									"ChangeSetName": {
 										"Fn::Join": [
-											"_",
+											"-",
 											[
 												{
 													"Ref": "projectName"
@@ -689,7 +689,7 @@
 									"Capabilities": "CAPABILITY_IAM",
 									"StackName": { 
 										"Fn::Join": [
-											"_",
+											"-",
 											[
 												{
 													"Ref": "projectName"
@@ -714,7 +714,7 @@
 								"Configuration": {
 									"StackName": {
 										"Fn::Join": [
-											"_",
+											"-",
 											[
 												{
 													"Ref": "projectName"
@@ -726,7 +726,7 @@
 									"ActionMode": "CHANGE_SET_EXECUTE",
 									"ChangeSetName": {
 										"Fn::Join": [
-											"_",
+											"-",
 											[
 												{
 													"Ref": "projectName"
@@ -770,7 +770,7 @@
 									"ActionMode": "CHANGE_SET_REPLACE",
 									"ChangeSetName": {
 										"Fn::Join": [
-											"_", [
+											"-", [
 												{
 													"Ref": "projectName"
 												},
@@ -787,7 +787,7 @@
 									"Capabilities": "CAPABILITY_IAM",
 									"StackName": {
 										"Fn::Join": [
-											"_", [
+											"-", [
 												{
 													"Ref": "projectName"
 												},
@@ -821,7 +821,7 @@
 								"Configuration": {
 									"StackName": {
 										"Fn::Join": [
-											"_",
+											"-",
 											[
 												{
 													"Ref": "projectName"
@@ -833,7 +833,7 @@
 									"ActionMode": "CHANGE_SET_EXECUTE",
 									"ChangeSetName": {
 										"Fn::Join": [
-											"_",
+											"-",
 											[
 												{
 													"Ref": "projectName"
@@ -890,7 +890,7 @@
 			"Properties": {
 				"RoleName": {
 					"Fn::Join": [
-						"_",
+						"-",
 						[
 							{
 								"Ref": "projectName"
@@ -951,7 +951,7 @@
 			"Properties": {
 				"FunctionName": {
 					"Fn::Join": [
-						"_",
+						"-",
 						[
 							{
 								"Ref": "projectName"
