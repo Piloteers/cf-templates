@@ -1,0 +1,21 @@
+{
+  "folderStructure": {
+    "webpack.config.js": "webpack.config.js",
+    "package.json": "package.json",
+    ".babelrc": ".babelrc",
+    ".eslintrc.json": ".eslintrc.json",
+    ".gitignore": ".gitignore",
+    "src": {
+      "lib": {
+        ".gitkeep": ".gitkeep"
+      },
+      "model": {
+        ".gitkeep": ".gitkeep"
+      },
+      "functions": {
+        ".gitkeep": ".gitkeep"
+      }
+    }
+  },
+  "sam": "lambda-api"
+}
