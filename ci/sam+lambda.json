@@ -550,7 +550,7 @@
 									}
 								],
 								"Configuration": {
-									"projectName": {
+									"ProjectName": {
 										"Ref": "projectName"
 									}
 								},
@@ -619,21 +619,29 @@
 									"Provider": "CloudFormation"
 								},
 								"Configuration": {
-									"StackName": [
-										"-",
-										{
-											"Ref": "projectName"
-										},
-										"Staging"
-									],
+									"StackName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"Staging"
+											]
+										]
+									},
 									"ActionMode": "CHANGE_SET_EXECUTE",
-									"ChangeSetName": [
-										"-",
-										{
-											"Ref": "projectName"
-										},
-										"Staging"
-									]
+									"ChangeSetName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"Staging"
+											]
+										]
+									}
 								},
 								"RunOrder": 2
 							},
@@ -718,21 +726,29 @@
 									"Provider": "CloudFormation"
 								},
 								"Configuration": {
-									"StackName": [
-										"-",
-										{
-											"Ref": "projectName"
-										},
-										"Production"
-									],
+									"StackName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"Production"
+											]
+										]
+									},
 									"ActionMode": "CHANGE_SET_EXECUTE",
-									"ChangeSetName": [
-										"-",
-										{
-											"Ref": "projectName"
-										},
-										"Production"
-									]
+									"ChangeSetName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"Production"
+											]
+										]
+									}
 								},
 								"RunOrder": 3
 							}
