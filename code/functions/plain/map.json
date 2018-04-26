@@ -9,7 +9,9 @@
       }
     }
   },
-  "runtimePackages": {},
+  "runtimePackages": {
+    "supercoolpackage": "1.0.0"
+  },
   "devPackages": {},
   "scripts": {},
   "functions": {}
