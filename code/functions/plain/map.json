@@ -1,5 +1,5 @@
 {
-  "cfConfig": "cfConfig.json",
+  "cfConfig": "cfConfig2.json",
   "folderStructure": {
     "src": {
       "functions": {
