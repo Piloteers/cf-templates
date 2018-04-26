@@ -1,5 +1,5 @@
 {
-  "cfConfig": "cfConfig2.json",
+  "cfConfig": "cfConfig.json",
   "folderStructure": {
     "src": {
       "functions": {
@@ -9,9 +9,7 @@
       }
     }
   },
-  "runtimePackages": {
-    "supercoolpackage": "1.0.0"
-  },
+  "runtimePackages": {},
   "devPackages": {},
   "scripts": {},
   "functions": {}
