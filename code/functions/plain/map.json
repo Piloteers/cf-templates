@@ -1,0 +1,16 @@
+{
+  "cfConfig": "cfConfig.json",
+  "folderStructure": {
+    "src": {
+      "functions": {
+        "{{functionName}}": {
+          "index.js": "index.js"
+        }
+      }
+    }
+  },
+  "runtimePackages": {},
+  "devPackages": {},
+  "scripts": {},
+  "functions": {}
+}
