@@ -17,5 +17,6 @@
       }
     }
   },
-  "sam": "lambda-api"
+  "stack": "lambda-api",
+  "package": {}
 }
