@@ -1,7 +1,7 @@
 {
+  "stack": "lambda-api",
   "folderStructure": {
     "webpack.config.js": "webpack.config.js",
-    "package.json": "package.json",
     ".babelrc": ".babelrc",
     ".eslintrc.json": ".eslintrc.json",
     ".gitignore": ".gitignore",
@@ -17,6 +17,22 @@
       }
     }
   },
-  "stack": "lambda-api",
-  "package": {}
+  "runtimePackages": {},
+  "devPackages": {
+    "babel-core": "^6.26.0",
+		"babel-eslint": "^7.2.3",
+		"babel-loader": "^7.1.4",
+		"babel-preset-env": "^1.6.1",
+		"eslint": "^4.16.0",
+		"eslint-config-airbnb-base": "^12.1.0",
+		"eslint-plugin-import": "^2.8.0",
+		"webpack": "^4.1.1",
+		"zip-webpack-plugin": "^3.0.0"
+  },
+  "scripts": {
+		"build": "webpack",
+		"clean": "rm -rf ./dist",
+		"lint": "eslint \"src/**/*.js\""
+	},
+  "functions": {}
 }
