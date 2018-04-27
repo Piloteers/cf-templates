@@ -5,6 +5,7 @@
     ".babelrc": ".babelrc",
     ".eslintrc.json": ".eslintrc.json",
     ".gitignore": ".gitignore",
+    "buildspec.yml": "buildspec.yml",
     "src": {
       "lib": {
         ".gitkeep": ".gitkeep"
