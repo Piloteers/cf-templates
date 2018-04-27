@@ -2,7 +2,7 @@
   "{{functionName}}Function": { 
     "Type": "AWS::Serverless::Function",
     "Properties": {
-        "CodeUri": "../dist/{{functionName}}/{{functionName}}.zip",
+        "CodeUri": "../../dist/{{functionName}}/{{functionName}}.zip",
         "Handler": "index.default",
         "Runtime": "nodejs8.10",
         "MemorySize": 128,

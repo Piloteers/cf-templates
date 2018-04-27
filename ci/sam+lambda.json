@@ -280,7 +280,7 @@
 								"cloudformation:ValidateTemplate"
 							],
 							"Resource": {
-								"Fn::Sub": "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${projectName}/*"
+								"Fn::Sub": "arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${projectName}-*/*"
 							}
 						},
 						{
@@ -494,7 +494,7 @@
 								"apigateway:*"
 							],
 							"Resource": {
-								"Fn::Sub": "arn:aws:apigateway:${AWS::Region}:${AWS::AccountId}:/*"
+								"Fn::Sub": "arn:aws:apigateway:${AWS::Region}::/*"
 							}
 						},
 						{
@@ -644,7 +644,15 @@
 								],
 								"Configuration": {
 									"ProjectName": {
-										"Ref": "projectName"
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"BuildProject"
+											]
+										]
 									}
 								},
 								"RunOrder": 1
@@ -663,6 +671,9 @@
 									"Provider": "CloudFormation"
 								},
 								"InputArtifacts": [
+									{
+										"Name": "SourceCodeOutputArtifact"
+									},
 									{
 										"Name": "BuildOutputArtifact"
 									}
@@ -687,7 +698,7 @@
 										]
 									},
 									"Capabilities": "CAPABILITY_IAM",
-									"StackName": { 
+									"StackName": {
 										"Fn::Join": [
 											"-",
 											[
@@ -699,7 +710,7 @@
 										]
 									},
 									"TemplatePath": "BuildOutputArtifact::SamDeploymentTemplate.json",
-									"TemplateConfiguration": "BuildOutputArtifact::SamDeploymentConfigStaging.json"
+									"TemplateConfiguration": "SourceCodeOutputArtifact::configStaging.json"
 								},
 								"RunOrder": 1
 							},
@@ -763,6 +774,9 @@
 								},
 								"InputArtifacts": [
 									{
+										"Name": "SourceCodeOutputArtifact"
+									},
+									{
 										"Name": "BuildOutputArtifact"
 									}
 								],
@@ -770,7 +784,8 @@
 									"ActionMode": "CHANGE_SET_REPLACE",
 									"ChangeSetName": {
 										"Fn::Join": [
-											"-", [
+											"-",
+											[
 												{
 													"Ref": "projectName"
 												},
@@ -787,7 +802,8 @@
 									"Capabilities": "CAPABILITY_IAM",
 									"StackName": {
 										"Fn::Join": [
-											"-", [
+											"-",
+											[
 												{
 													"Ref": "projectName"
 												},
@@ -796,7 +812,7 @@
 										]
 									},
 									"TemplatePath": "BuildOutputArtifact::SamDeploymentTemplate.json",
-									"TemplateConfiguration": "BuildOutputArtifact::SamDeploymentConfigProduction.json"
+									"TemplateConfiguration": "SourceCodeOutputArtifact::configProduction.json"
 								},
 								"RunOrder": 1
 							},

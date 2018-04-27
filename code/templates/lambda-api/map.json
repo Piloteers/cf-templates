@@ -3,6 +3,8 @@
   "folderStructure": {
     "webpack.config.js": "webpack.config.js",
     ".babelrc": ".babelrc",
+    "configStaging.json": "configStaging.json",
+    "configProduction.json": "configProduction.json",
     ".eslintrc.json": ".eslintrc.json",
     ".gitignore": ".gitignore",
     "buildspec.yml": "buildspec.yml",
