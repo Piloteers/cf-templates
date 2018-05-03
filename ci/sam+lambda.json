@@ -64,6 +64,22 @@
 				"AccessControl": "Private",
 				"VersioningConfiguration": {
 					"Status": "Suspended"
+				},
+				"LifecycleConfiguration": {
+					"ExpirationInDays" : 10,
+					"Id" : {
+						"Fn::Join": [
+							"-",
+							[
+								{
+									"Ref": "projectName"
+								},
+								"artifactbucket",
+								"lifecyclerule"
+							]
+						]
+					},
+					"Status" : "Enabled"
 				}
 			}
 		},
