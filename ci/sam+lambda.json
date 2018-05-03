@@ -749,16 +749,6 @@
 									}
 								},
 								"RunOrder": 2
-							},
-							{
-								"Name": "ApprovalForRelease",
-								"ActionTypeId": {
-									"Category": "Approval",
-									"Owner": "AWS",
-									"Version": 1,
-									"Provider": "Manual"
-								},
-								"RunOrder": 3
 							}
 						]
 					},
