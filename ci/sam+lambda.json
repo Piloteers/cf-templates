@@ -28,7 +28,7 @@
 		"productionBranch": {
 			"Type": "String",
 			"Description": "Git branch to pull request into after a successful deploy. Leave empty for no action.",
-			"Default": "master"
+			"Default": ""
 		}
 	},
 	"Conditions": {
@@ -791,215 +791,208 @@
 		},
 		"ProductionCodePipeline": {
 			"Type": "AWS::CodePipeline::Pipeline",
+			"Condition": "PullRequestAfterDeploy",
 			"Properties": {
-				"Fn::If": [
-					"PullRequestAfterDeploy",
+				"Name": {
+					"Fn::Join": [
+						"-",
+						[
+							{
+								"Ref": "projectName"
+							},
+							"production",
+							"CodePipeline"
+						]
+					]
+				},
+				"RoleArn": {
+					"Fn::GetAtt": [
+						"CodePipelineServiceRole",
+						"Arn"
+					]
+				},
+				"Stages": [
 					{
-						"Name": {
-							"Fn::Join": [
-								"-",
-								[
-									{
-										"Ref": "projectName"
-									},
-									"production",
-									"CodePipeline"
-								]
-							]
-						},
-						"RoleArn": {
-							"Fn::GetAtt": [
-								"CodePipelineServiceRole",
-								"Arn"
-							]
-						},
-						"Stages": [
+						"Name": "Source",
+						"Actions": [
 							{
 								"Name": "Source",
-								"Actions": [
+								"ActionTypeId": {
+									"Category": "Source",
+									"Owner": "ThirdParty",
+									"Version": 1,
+									"Provider": "GitHub"
+								},
+								"OutputArtifacts": [
 									{
-										"Name": "Source",
-										"ActionTypeId": {
-											"Category": "Source",
-											"Owner": "ThirdParty",
-											"Version": 1,
-											"Provider": "GitHub"
-										},
-										"OutputArtifacts": [
-											{
-												"Name": "SourceCodeOutputArtifact"
-											}
-										],
-										"Configuration": {
-											"Owner": {
-												"Ref": "gitHubRepoOwner"
-											},
-											"Repo": {
-												"Ref": "gitHubRepo"
-											},
-											"Branch": {
-												"Ref": "productionBranch"
-											},
-											"OAuthToken": {
-												"Ref": "gitHubToken"
-											}
-										},
-										"RunOrder": 1
+										"Name": "SourceCodeOutputArtifact"
 									}
-								]
-							},
-							{
-								"Name": "Build",
-								"Actions": [
-									{
-										"Name": "CodeBuild",
-										"ActionTypeId": {
-											"Category": "Build",
-											"Owner": "AWS",
-											"Version": 1,
-											"Provider": "CodeBuild"
-										},
-										"InputArtifacts": [
-											{
-												"Name": "SourceCodeOutputArtifact"
-											}
-										],
-										"OutputArtifacts": [
-											{
-												"Name": "BuildOutputArtifact"
-											}
-										],
-										"Configuration": {
-											"ProjectName": {
-												"Fn::Join": [
-													"-",
-													[
-														{
-															"Ref": "projectName"
-														},
-														"BuildProject"
-													]
-												]
-											}
-										},
-										"RunOrder": 1
-									}
-								]
-							},
-							{
-								"Name": "Release",
-								"Actions": [
-									{
-										"Name": "CreateChangeSet",
-										"ActionTypeId": {
-											"Category": "Deploy",
-											"Owner": "AWS",
-											"Version": 1,
-											"Provider": "CloudFormation"
-										},
-										"InputArtifacts": [
-											{
-												"Name": "SourceCodeOutputArtifact"
-											},
-											{
-												"Name": "BuildOutputArtifact"
-											}
-										],
-										"Configuration": {
-											"ActionMode": "CHANGE_SET_REPLACE",
-											"ChangeSetName": {
-												"Fn::Join": [
-													"-",
-													[
-														{
-															"Ref": "projectName"
-														},
-														"Production"
-													]
-												]
-											},
-											"RoleArn": {
-												"Fn::GetAtt": [
-													"CloudFormationServiceRole",
-													"Arn"
-												]
-											},
-											"Capabilities": "CAPABILITY_IAM",
-											"StackName": {
-												"Fn::Join": [
-													"-",
-													[
-														{
-															"Ref": "projectName"
-														},
-														"Production"
-													]
-												]
-											},
-											"TemplatePath": "BuildOutputArtifact::SamDeploymentTemplate.json",
-											"TemplateConfiguration": "SourceCodeOutputArtifact::configProduction.json"
-										},
-										"RunOrder": 1
+								],
+								"Configuration": {
+									"Owner": {
+										"Ref": "gitHubRepoOwner"
 									},
-									{
-										"Name": "ApprovalForRelease",
-										"ActionTypeId": {
-											"Category": "Approval",
-											"Owner": "AWS",
-											"Version": 1,
-											"Provider": "Manual"
-										},
-										"RunOrder": 2
+									"Repo": {
+										"Ref": "gitHubRepo"
 									},
-									{
-										"Name": "ExecuteChangeSet",
-										"ActionTypeId": {
-											"Category": "Deploy",
-											"Owner": "AWS",
-											"Version": 1,
-											"Provider": "CloudFormation"
-										},
-										"Configuration": {
-											"StackName": {
-												"Fn::Join": [
-													"-",
-													[
-														{
-															"Ref": "projectName"
-														},
-														"Production"
-													]
-												]
-											},
-											"ActionMode": "CHANGE_SET_EXECUTE",
-											"ChangeSetName": {
-												"Fn::Join": [
-													"-",
-													[
-														{
-															"Ref": "projectName"
-														},
-														"Production"
-													]
-												]
-											}
-										},
-										"RunOrder": 3
+									"Branch": {
+										"Ref": "productionBranch"
+									},
+									"OAuthToken": {
+										"Ref": "gitHubToken"
 									}
-								]
+								},
+								"RunOrder": 1
 							}
-						],
-						"ArtifactStore": {
-							"Type": "S3",
-							"Location": {
-								"Ref": "DeploymentArtifactBucket"
-							}
-						}
+						]
 					},
 					{
-						"Ref": "AWS::NoValue"
+						"Name": "Build",
+						"Actions": [
+							{
+								"Name": "CodeBuild",
+								"ActionTypeId": {
+									"Category": "Build",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "CodeBuild"
+								},
+								"InputArtifacts": [
+									{
+										"Name": "SourceCodeOutputArtifact"
+									}
+								],
+								"OutputArtifacts": [
+									{
+										"Name": "BuildOutputArtifact"
+									}
+								],
+								"Configuration": {
+									"ProjectName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"BuildProject"
+											]
+										]
+									}
+								},
+								"RunOrder": 1
+							}
+						]
+					},
+					{
+						"Name": "Release",
+						"Actions": [
+							{
+								"Name": "CreateChangeSet",
+								"ActionTypeId": {
+									"Category": "Deploy",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "CloudFormation"
+								},
+								"InputArtifacts": [
+									{
+										"Name": "SourceCodeOutputArtifact"
+									},
+									{
+										"Name": "BuildOutputArtifact"
+									}
+								],
+								"Configuration": {
+									"ActionMode": "CHANGE_SET_REPLACE",
+									"ChangeSetName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"Production"
+											]
+										]
+									},
+									"RoleArn": {
+										"Fn::GetAtt": [
+											"CloudFormationServiceRole",
+											"Arn"
+										]
+									},
+									"Capabilities": "CAPABILITY_IAM",
+									"StackName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"Production"
+											]
+										]
+									},
+									"TemplatePath": "BuildOutputArtifact::SamDeploymentTemplate.json",
+									"TemplateConfiguration": "SourceCodeOutputArtifact::configProduction.json"
+								},
+								"RunOrder": 1
+							},
+							{
+								"Name": "ApprovalForRelease",
+								"ActionTypeId": {
+									"Category": "Approval",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "Manual"
+								},
+								"RunOrder": 2
+							},
+							{
+								"Name": "ExecuteChangeSet",
+								"ActionTypeId": {
+									"Category": "Deploy",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "CloudFormation"
+								},
+								"Configuration": {
+									"StackName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"Production"
+											]
+										]
+									},
+									"ActionMode": "CHANGE_SET_EXECUTE",
+									"ChangeSetName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"Production"
+											]
+										]
+									}
+								},
+								"RunOrder": 3
+							}
+						]
 					}
-				]
+				],
+				"ArtifactStore": {
+					"Type": "S3",
+					"Location": {
+						"Ref": "DeploymentArtifactBucket"
+					}
+				}
 			}
 		},
 		"GitHubActionServiceRole": {
