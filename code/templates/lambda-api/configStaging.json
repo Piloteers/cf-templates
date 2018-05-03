@@ -1,5 +1,7 @@
 {
-  "Parameters" : {},
+  "Parameters" : {
+    "stage": "staging"
+  },
   "Tags" : {}, 
   "StackPolicy" : {}
 }

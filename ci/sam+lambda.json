@@ -727,7 +727,7 @@
 										]
 									},
 									"TemplatePath": "BuildOutputArtifact::SamDeploymentTemplate.json",
-									"TemplateConfiguration": "SourceCodeOutputArtifact::configStaging.json"
+									"TemplateConfiguration": "SourceCodeOutputArtifact::infrastructure/cf/configStaging.json"
 								},
 								"RunOrder": 1
 							},
@@ -951,7 +951,7 @@
 										]
 									},
 									"TemplatePath": "BuildOutputArtifact::SamDeploymentTemplate.json",
-									"TemplateConfiguration": "SourceCodeOutputArtifact::configProduction.json"
+									"TemplateConfiguration": "SourceCodeOutputArtifact::infrastructure/cf/configProduction.json"
 								},
 								"RunOrder": 1
 							},
