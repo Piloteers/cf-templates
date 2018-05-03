@@ -484,7 +484,14 @@
 								"lambda:TagResource",
 								"lambda:UntagResource",
 								"lambda:UpdateFunctionCode",
-								"lambda:UpdateFunctionConfiguration"
+								"lambda:UpdateFunctionConfiguration",
+								"lambda:ListVersionsByFunction",
+								"lambda:PublishVersion",
+								"lambda:CreateAlias",
+								"lambda:DeleteAlias",
+								"lambda:GetAlias",
+								"lambda:ListAliases",
+								"lambda:UpdateAlias"
 							],
 							"Resource": {
 								"Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${projectName}-*"
