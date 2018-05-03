@@ -3,6 +3,18 @@
     "Type": "AWS::Serverless::Function",
     "Properties": {
         "CodeUri": "../../dist/{{functionName}}/{{functionName}}.zip",
+        "FunctionName": {
+					"Fn::Join": [
+						"-",
+						[
+							{
+								"Ref": "AWS::StackName"
+							},
+							"{{functionName}}"
+						]
+					]
+				},
+				"AutoPublishAlias": "current",
         "Handler": "index.default",
         "Runtime": "nodejs8.10",
         "MemorySize": 128,
