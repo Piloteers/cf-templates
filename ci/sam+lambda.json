@@ -725,7 +725,7 @@
 											"Arn"
 										]
 									},
-									"Capabilities": "CAPABILITY_IAM",
+									"Capabilities": "CAPABILITY_NAMED_IAM",
 									"StackName": {
 										"Fn::Join": [
 											"-",
@@ -949,7 +949,7 @@
 											"Arn"
 										]
 									},
-									"Capabilities": "CAPABILITY_IAM",
+									"Capabilities": "CAPABILITY_NAMED_IAM",
 									"StackName": {
 										"Fn::Join": [
 											"-",

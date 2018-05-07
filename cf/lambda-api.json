@@ -2,6 +2,79 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Transform": "AWS::Serverless-2016-10-31",
   "Description": "Example project",
+  "Parameters": {
+		"stage": {
+			"Type": "String",
+			"Description": "Stage of deployment"
+		}
+	},
   "Resources": {
+    "LambdaApiGatewayRole": {
+			"Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Effect": "Allow",
+            "Principal": {
+              "Service": [
+                "apigateway.amazonaws.com",
+                "lambda.amazonaws.com"
+              ]
+            },
+            "Action": "sts:AssumeRole"
+          }]
+				},
+				"Policies": [
+					{
+						"PolicyName": {
+							"Fn::Join": [
+								"-",
+								[
+									{ "Ref": "AWS::StackName" },
+									"LambdaApiGatewayPolicy"
+								]
+							]
+						},
+						"PolicyDocument": {
+							"Version" : "2012-10-17",
+							"Statement": [{
+								 "Effect": "Allow",
+								 "Action": "lambda:InvokeFunction",
+								 "Resource": {
+									 "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-*"
+								 }
+							}]
+						}
+				 }
+				],
+        "RoleName": {
+					"Fn::Join": [
+						"-",
+						[
+							{ "Ref": "AWS::StackName" },
+							"LambdaApiGatewayRole"
+						]
+					]
+				}
+      }
+    },
+    "ServerlessRestApi": {
+			"Type": "AWS::Serverless::Api",
+			"DependsOn": [],
+			"Properties": {
+				"StageName": {
+					"Ref": "stage"
+				},
+				"DefinitionBody": {
+					"swagger": "2.0",
+					"info": {
+						"title": { "Ref": "AWS::StackName" }
+					},
+					"paths": {
+					}
+				}
+			}
+		}
   }
 }
