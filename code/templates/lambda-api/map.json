@@ -1,5 +1,4 @@
 {
-  "stack": true,
   "folderStructure": {
     "webpack.config.js": "webpack.config.js",
     ".babelrc": ".babelrc",
