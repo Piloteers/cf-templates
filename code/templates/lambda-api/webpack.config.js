@@ -2,12 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const ZipPlugin = require('zip-webpack-plugin');
 
-module.exports = function (env) {
+module.exports = (env) => {
   const lambdaFunctionDir = path.join(__dirname, 'src', 'functions');
   // Get list of functions from env or use all folder within functions that dont start with an '.'
   const functionsToBuild = env && env.functions ? env.functions.split(',') : fs.readdirSync(lambdaFunctionDir).filter(item => fs.lstatSync(path.join(lambdaFunctionDir, item)).isDirectory() && !item.match(/^\./));
-  console.log(`Building ${functionsToBuild.join(', ')}`);
-
+  console.log(`Building ${functionsToBuild.join(', ')}`); // eslint-disable-line no-console
   return functionsToBuild
     .map(fxn => ({
       entry: path.join(lambdaFunctionDir, fxn, 'index.js'),
@@ -16,7 +15,7 @@ module.exports = function (env) {
       output: {
         path: path.join(__dirname, 'dist', fxn),
         filename: 'index.js',
-        libraryTarget: 'commonjs2'
+        libraryTarget: 'commonjs2',
       },
       module: {
         rules: [{
@@ -25,31 +24,31 @@ module.exports = function (env) {
           use: {
             loader: 'babel-loader',
             query: {
-              extends: path.join(__dirname, '.babelrc')
-            }
-          }
-        }]
+              extends: path.join(__dirname, '.babelrc'),
+            },
+          },
+        }],
       },
       plugins: [
         new ZipPlugin({
           path: path.join(__dirname, 'dist', fxn),
           pathPrefix: '',
-          filename: `${fxn}.zip`
-        })
+          filename: `${fxn}.zip`,
+        }),
       ],
       externals: {
         // These modules are already installed on the Lambda instance.
         'aws-sdk': 'aws-sdk',
-        'awslambda': 'awslambda',
+        awslambda: 'awslambda',
         'dynamodb-doc': 'dynamodb-doc',
-        'imagemagick': 'imagemagick'
+        imagemagick: 'imagemagick',
       },
       node: {
         // Allow these globals.
         __filename: false,
-        __dirname: false
+        __dirname: false,
       },
       stats: 'minimal',
-      bail: true
+      bail: true,
     }));
 };

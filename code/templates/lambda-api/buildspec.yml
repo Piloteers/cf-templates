@@ -5,6 +5,7 @@ phases:
       - npm install || (cat /root/.npm/_logs/*-debug.log && false)
   pre_build:
     commands:
+      - npm run lint
   build:
     commands:
       - npm run build
