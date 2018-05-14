@@ -72,7 +72,21 @@
 						"title": { "Ref": "AWS::StackName" }
 					},
 					"paths": {
-					}
+					},
+					"definitions": {
+						"Empty": {
+							"type": "object",
+							"title": "Empty Schema"
+						}
+					},
+					"x-amazon-apigateway-request-validators": {
+						"Validate body, query string parameters, and headers": {
+							"validateRequestParameters": true,
+							"validateRequestBody": true
+						}
+					},
+					"x-amazon-apigateway-binary-media-types": [
+					]
 				}
 			}
 		}
