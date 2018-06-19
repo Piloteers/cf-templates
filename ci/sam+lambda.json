@@ -196,7 +196,7 @@
 				"Environment": {
 					"Type": "linuxContainer",
 					"ComputeType": "BUILD_GENERAL1_SMALL",
-					"Image": "aws/codebuild/nodejs:7.0.0",
+					"Image": "aws/codebuild/nodejs:8.11.0",
 					"EnvironmentVariables": [
 						{
 							"Name": "BUILD_ARTIFACT_BUCKET",
