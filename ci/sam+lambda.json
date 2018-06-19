@@ -320,6 +320,15 @@
 						{
 							"Effect": "Allow",
 							"Action": [
+								"ssm:GetParameters",
+								"ssm:GetParameter",
+								"ssm:DescribeParameters"
+							],
+							"Resource": "*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
 								"iam:PassRole"
 							],
 							"Resource": {
@@ -557,6 +566,24 @@
 						{
 							"Effect": "Allow",
 							"Action": [
+								"ssm:GetParameters",
+								"ssm:GetParameter",
+								"ssm:DescribeParameters"
+							],
+							"Resource": "*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"sns:*"
+							],
+							"Resource": {
+								"Fn::Sub": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:*"
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
 								"dynamodb:ListTags",
 								"dynamodb:TagResource",
 								"dynamodb:UntagResource"
@@ -603,7 +630,7 @@
 							{
 								"Ref": "projectName"
 							},
-							"staging",
+							"Staging",
 							"CodePipeline"
 						]
 					]
@@ -827,7 +854,7 @@
 							{
 								"Ref": "projectName"
 							},
-							"production",
+							"Production",
 							"CodePipeline"
 						]
 					]
