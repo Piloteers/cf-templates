@@ -1,6 +1,6 @@
 {
   "Parameters" : {
-    "stage": "Staging"
+    "stage": "staging"
   },
   "Tags" : {}, 
   "StackPolicy" : {}

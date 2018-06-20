@@ -1,6 +1,6 @@
 {
   "Parameters" : {
-    "stage": "Production"
+    "stage": "production"
   },
   "Tags" : {}, 
   "StackPolicy" : {}
