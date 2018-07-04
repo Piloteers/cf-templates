@@ -5,7 +5,7 @@ const modelDir = path.join(__dirname, 'src', 'model');
 const configFile = path.join(__dirname, 'infrastructure', 'cf', 'lambda-api.json');
 const newConfigFile = path.join(__dirname, 'infrastructure', 'cf', 'template.json');
 const apiFile = path.join(__dirname, 'infrastructure', 'cf', 'apiDefinition.json');
-const models = fs.readdirSync(modelDir);
+const models = fs.readdirSync(modelDir).filter(item => item.indexOf('.json') > -1);
 const oldAPI = JSON.parse(fs.readFileSync(apiFile));
 const template = JSON.parse(fs.readFileSync(configFile));
 for (let i = 0; i < models.length; i += 1) {
