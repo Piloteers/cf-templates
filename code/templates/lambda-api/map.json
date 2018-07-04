@@ -4,17 +4,23 @@
     ".babelrc": ".babelrc",
     ".eslintrc.json": ".eslintrc.json",
     ".gitignore": ".gitignore",
+    "prebuild.js": "prebuild.js",
     ".eslintignore": ".eslintignore",
     "buildspec.yml": "buildspec.yml",
     "infrastructure": {
       "cf": {
         "configStaging.json": "configStaging.json",
-        "configProduction.json": "configProduction.json"
+        "configProduction.json": "configProduction.json",
+        "apiDefinition.json": "apiDefinition.json"
       }
     },
     "src": {
       "lib": {
         ".gitkeep": ".gitkeep"
+      },
+      "helper": {
+        ".gitkeep": ".gitkeep",
+        "RestHelper.js": "RestHelper.js"
       },
       "model": {
         ".gitkeep": ".gitkeep"
@@ -39,6 +45,7 @@
     "zip-webpack-plugin": "^3.0.0"
   },
   "scripts": {
+		"prebuild": "node prebuild.js",
 		"build": "webpack",
 		"clean": "rm -rf ./dist",
 		"lint": "eslint \"src/**/*.js\""

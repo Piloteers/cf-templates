@@ -10,6 +10,7 @@ pids
 
 # Dependency directories
 node_modules
+package-lock.json
 
 # Distribution folder
 dist
@@ -21,3 +22,4 @@ dist
 .node_repl_history
 
 .DS_Store
+/infrastructure/cf/template.json

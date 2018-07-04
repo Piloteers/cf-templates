@@ -1,0 +1,35 @@
+{
+	"swagger": "2.0",
+	"info": {
+		"title": {
+			"Ref": "AWS::StackName"
+		}
+	},
+	"paths": {},
+	"definitions": {
+		"Empty": {
+			"type": "object",
+			"title": "Empty Schema"
+    },
+    "Error": {
+      "type": "object",
+      "properties":  {
+        "message": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        }
+      }
+    }
+	},
+	"securityDefinitions": {
+	},
+	"x-amazon-apigateway-request-validators": {
+		"Validate body, query string parameters, and headers": {
+			"validateRequestParameters": true,
+			"validateRequestBody": true
+		}
+	},
+	"x-amazon-apigateway-binary-media-types": []
+}

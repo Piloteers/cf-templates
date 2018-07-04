@@ -1,23 +1,21 @@
-let result = { statusCode : null, body: null };
-
+import { getResponse, newError } from '../../helper/RestHelper';
 
 async function main(e, ctx, cb) {
-    try {
-        console.log(e);
-        if(e.key1 == "value1"){
-            result.statusCode = 200;
-            result.body = { "test": "lof"};
-        }else {
-            throw(new Error("Test"));
-        }
-        result.body = JSON.stringify(result.body);
-        cb(null, result);
-        
-    }catch (err){
-        cb(null, {statusCode: 500, body: err.message});
-    }
+  try {
+    // Get parameters
+
+    // check if contentSubmission object exists
+
+    // Example Error
+    // throw (newError('ContentSubmission object not found', null, 400));
+
+    // Return
+    cb(null, getResponse(null, {}));
+  } catch (err) {
+    cb(null, getResponse(err));
+  }
 }
 
 module.exports = {
-    default: main
-}
+  default: main,
+};

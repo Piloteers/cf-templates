@@ -5,6 +5,7 @@ phases:
       - npm install || (cat /root/.npm/_logs/*-debug.log && false)
   pre_build:
     commands:
+      - npm run prebuild
       - npm run lint
   build:
     commands:
@@ -13,7 +14,7 @@ phases:
     commands:
       # env var BUILD_ARTIFACT_BUCKET is defined in ci
       - aws cloudformation package
-         --template-file infrastructure/cf/lambda-api.json
+         --template-file infrastructure/cf/template.json
          --s3-bucket $BUILD_ARTIFACT_BUCKET
          --output-template-file SamDeploymentTemplate.json
 artifacts:

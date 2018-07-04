@@ -11,6 +11,7 @@ module.exports = (env) => {
     .map(fxn => ({
       entry: path.join(lambdaFunctionDir, fxn, 'index.js'),
       target: 'node',
+      mode: 'production',
       context: path.resolve(__dirname),
       output: {
         path: path.join(__dirname, 'dist', fxn),
