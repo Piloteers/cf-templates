@@ -2,10 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const ZipPlugin = require('zip-webpack-plugin');
 
-module.exports = (env) => {
+module.exports = () => {
   const lambdaFunctionDir = path.join(__dirname, 'src', 'functions');
+  const { env } = process || {};
+  const { npm_config_FUNCTIONS: argvFunctions } = env || {};
   // Get list of functions from env or use all folder within functions that dont start with an '.'
-  const functionsToBuild = env && env.functions ? env.functions.split(',') : fs.readdirSync(lambdaFunctionDir).filter(item => fs.lstatSync(path.join(lambdaFunctionDir, item)).isDirectory() && !item.match(/^\./));
+  const functionsToBuild = argvFunctions ? argvFunctions.split(',') : fs.readdirSync(lambdaFunctionDir).filter(item => fs.lstatSync(path.join(lambdaFunctionDir, item)).isDirectory() && !item.match(/^\./));
   console.log(`Building ${functionsToBuild.join(', ')}`); // eslint-disable-line no-console
   return functionsToBuild
     .map(fxn => ({

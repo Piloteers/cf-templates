@@ -26,7 +26,10 @@
         ".gitkeep": ".gitkeep"
       },
       "functions": {
-        ".gitkeep": ".gitkeep"
+        ".gitkeep": ".gitkeep",
+        "swagger": {
+          "index.js": "function-swagger-index.js"
+        }
       }
     }
   },

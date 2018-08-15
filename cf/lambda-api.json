@@ -6,6 +6,10 @@
 		"stage": {
 			"Type": "String",
 			"Description": "Stage of deployment"
+		},
+		"apiId": {
+			"Type": "String",
+			"Description": "API Id of own api"
 		}
 	},
   "Resources": {
@@ -67,6 +71,58 @@
 					"Ref": "stage"
 				},
 				"DefinitionBody": {}
+			}
+		},
+		"swaggerFunction": {
+			"Type": "AWS::Serverless::Function",
+			"Properties": {
+				"CodeUri": "../../dist/swagger/swagger.zip",
+				"FunctionName": {
+					"Fn::Join": [
+						"-",
+						[
+							{
+								"Ref": "AWS::StackName"
+							},
+							"swagger"
+						]
+					]
+				},
+				"Handler": "index.default",
+				"Runtime": "nodejs8.10",
+				"MemorySize": 128,
+				"Environment": {
+					"Variables": {
+						"REGION": {
+							"Ref": "AWS::Region"
+						},
+						"API_ID": {
+							"Ref": "apiId"
+						},
+						"STAGE": {
+							"Ref": "stage"
+						}
+					}
+				},
+				"Policies": [
+					{
+						"Version": "2012-10-17",
+						"Statement": [
+							{
+								"Effect": "Allow",
+								"Action": [
+									"apigateway:GET"
+								],
+								"Resource": {
+									"Fn::Sub": "arn:aws:apigateway:${AWS::Region}::/restapis/${apiId}/stages/${stage}/exports/swagger"
+								}
+							}
+						]
+					}
+				],
+				"Timeout": 5,
+				"AutoPublishAlias": "current",
+				"Events": {}
 			}
 		}
   }

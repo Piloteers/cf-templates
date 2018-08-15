@@ -20,10 +20,15 @@
 			"Type": "String",
 			"Description": "GitHub git repo."
 		},
-		"stagingBranch": {
+		"testingBranch": {
 			"Type": "String",
 			"Description": "Git branch to build off of.",
 			"Default": "develop"
+		},
+		"stagingBranch": {
+			"Type": "String",
+			"Description": "Git branch to build off of.",
+			"Default": ""
 		},
 		"productionBranch": {
 			"Type": "String",
@@ -32,12 +37,24 @@
 		}
 	},
 	"Conditions": {
-		"PullRequestAfterDeploy": {
+		"PullRequestAfterDeployProduction": {
 			"Fn::Not": [
 				{
 					"Fn::Equals": [
 						{
 							"Ref": "productionBranch"
+						},
+						""
+					]
+				}
+			]
+		},
+		"PullRequestAfterDeployStaging": {
+			"Fn::Not": [
+				{
+					"Fn::Equals": [
+						{
+							"Ref": "stagingBranch"
 						},
 						""
 					]
@@ -340,7 +357,7 @@
 						},
 						{
 							"Fn::If": [
-								"PullRequestAfterDeploy",
+								"PullRequestAfterDeployProduction",
 								{
 									"Effect": "Allow",
 									"Action": [
@@ -348,7 +365,7 @@
 									],
 									"Resource": {
 										"Fn::GetAtt": [
-											"GitHubActionFunction",
+											"GitHubActionProductionFunction",
 											"Arn"
 										]
 									}
@@ -360,7 +377,42 @@
 						},
 						{
 							"Fn::If": [
-								"PullRequestAfterDeploy",
+								"PullRequestAfterDeployProduction",
+								{
+									"Effect": "Allow",
+									"Action": [
+										"lambda:ListFunctions"
+									],
+									"Resource": "*"
+								},
+								{
+									"Ref": "AWS::NoValue"
+								}
+							]
+						},
+						{
+							"Fn::If": [
+								"PullRequestAfterDeployStaging",
+								{
+									"Effect": "Allow",
+									"Action": [
+										"lambda:InvokeFunction"
+									],
+									"Resource": {
+										"Fn::GetAtt": [
+											"GitHubActionStagingFunction",
+											"Arn"
+										]
+									}
+								},
+								{
+									"Ref": "AWS::NoValue"
+								}
+							]
+						},
+						{
+							"Fn::If": [
+								"PullRequestAfterDeployStaging",
 								{
 									"Effect": "Allow",
 									"Action": [
@@ -620,6 +672,229 @@
 				}
 			}
 		},
+		"TestingCodePipeline": {
+			"Type": "AWS::CodePipeline::Pipeline",
+			"Properties": {
+				"Name": {
+					"Fn::Join": [
+						"-",
+						[
+							{
+								"Ref": "projectName"
+							},
+							"testing",
+							"CodePipeline"
+						]
+					]
+				},
+				"RoleArn": {
+					"Fn::GetAtt": [
+						"CodePipelineServiceRole",
+						"Arn"
+					]
+				},
+				"Stages": [
+					{
+						"Name": "Source",
+						"Actions": [
+							{
+								"Name": "Source",
+								"ActionTypeId": {
+									"Category": "Source",
+									"Owner": "ThirdParty",
+									"Version": 1,
+									"Provider": "GitHub"
+								},
+								"OutputArtifacts": [
+									{
+										"Name": "SourceCodeOutputArtifact"
+									}
+								],
+								"Configuration": {
+									"Owner": {
+										"Ref": "gitHubRepoOwner"
+									},
+									"Repo": {
+										"Ref": "gitHubRepo"
+									},
+									"Branch": {
+										"Ref": "testingBranch"
+									},
+									"OAuthToken": {
+										"Ref": "gitHubToken"
+									}
+								},
+								"RunOrder": 1
+							}
+						]
+					},
+					{
+						"Name": "Build",
+						"Actions": [
+							{
+								"Name": "CodeBuild",
+								"ActionTypeId": {
+									"Category": "Build",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "CodeBuild"
+								},
+								"InputArtifacts": [
+									{
+										"Name": "SourceCodeOutputArtifact"
+									}
+								],
+								"OutputArtifacts": [
+									{
+										"Name": "BuildOutputArtifact"
+									}
+								],
+								"Configuration": {
+									"ProjectName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"BuildProject"
+											]
+										]
+									}
+								},
+								"RunOrder": 1
+							}
+						]
+					},
+					{
+						"Name": "DeployToTesting",
+						"Actions": [
+							{
+								"Name": "CreateChangeSet",
+								"ActionTypeId": {
+									"Category": "Deploy",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "CloudFormation"
+								},
+								"InputArtifacts": [
+									{
+										"Name": "SourceCodeOutputArtifact"
+									},
+									{
+										"Name": "BuildOutputArtifact"
+									}
+								],
+								"Configuration": {
+									"ActionMode": "CHANGE_SET_REPLACE",
+									"ChangeSetName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"testing"
+											]
+										]
+									},
+									"RoleArn": {
+										"Fn::GetAtt": [
+											"CloudFormationServiceRole",
+											"Arn"
+										]
+									},
+									"Capabilities": "CAPABILITY_NAMED_IAM",
+									"StackName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"testing"
+											]
+										]
+									},
+									"TemplatePath": "BuildOutputArtifact::SamDeploymentTemplate.json",
+									"TemplateConfiguration": "SourceCodeOutputArtifact::infrastructure/cf/configTesting.json"
+								},
+								"RunOrder": 1
+							},
+							{
+								"Name": "ExecuteChangeSet",
+								"ActionTypeId": {
+									"Category": "Deploy",
+									"Owner": "AWS",
+									"Version": 1,
+									"Provider": "CloudFormation"
+								},
+								"Configuration": {
+									"StackName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"testing"
+											]
+										]
+									},
+									"ActionMode": "CHANGE_SET_EXECUTE",
+									"ChangeSetName": {
+										"Fn::Join": [
+											"-",
+											[
+												{
+													"Ref": "projectName"
+												},
+												"testing"
+											]
+										]
+									}
+								},
+								"RunOrder": 2
+							}
+						]
+					},
+					{
+						"Fn::If": [
+							"PullRequestAfterDeployStaging",
+							{
+								"Name": "PostRelease",
+								"Actions": [
+									{
+										"Name": "GitHubPullRequest",
+										"ActionTypeId": {
+											"Category": "Invoke",
+											"Owner": "AWS",
+											"Version": 1,
+											"Provider": "Lambda"
+										},
+										"Configuration": {
+											"FunctionName": {
+												"Ref": "GitHubActionStagingFunction"
+											}
+										},
+										"RunOrder": 1
+									}
+								]
+							},
+							{
+								"Ref": "AWS::NoValue"
+							}
+						]
+					}
+				],
+				"ArtifactStore": {
+					"Type": "S3",
+					"Location": {
+						"Ref": "DeploymentArtifactBucket"
+					}
+				}
+			}
+		},
 		"StagingCodePipeline": {
 			"Type": "AWS::CodePipeline::Pipeline",
 			"Properties": {
@@ -808,7 +1083,7 @@
 					},
 					{
 						"Fn::If": [
-							"PullRequestAfterDeploy",
+							"PullRequestAfterDeployProduction",
 							{
 								"Name": "PostRelease",
 								"Actions": [
@@ -822,7 +1097,7 @@
 										},
 										"Configuration": {
 											"FunctionName": {
-												"Ref": "GitHubActionFunction"
+												"Ref": "GitHubActionProductionFunction"
 											}
 										},
 										"RunOrder": 1
@@ -845,7 +1120,7 @@
 		},
 		"ProductionCodePipeline": {
 			"Type": "AWS::CodePipeline::Pipeline",
-			"Condition": "PullRequestAfterDeploy",
+			"Condition": "PullRequestAfterDeployProduction",
 			"Properties": {
 				"Name": {
 					"Fn::Join": [
@@ -1050,7 +1325,7 @@
 			}
 		},
 		"GitHubActionServiceRole": {
-			"Condition": "PullRequestAfterDeploy",
+			"Condition": "PullRequestAfterDeployStaging",
 			"Type": "AWS::IAM::Role",
 			"Properties": {
 				"RoleName": {
@@ -1110,8 +1385,8 @@
 				]
 			}
 		},
-		"GitHubActionFunction": {
-			"Condition": "PullRequestAfterDeploy",
+		"GitHubActionStagingFunction": {
+			"Condition": "PullRequestAfterDeployStaging",
 			"Type": "AWS::Lambda::Function",
 			"Properties": {
 				"FunctionName": {
@@ -1121,7 +1396,56 @@
 							{
 								"Ref": "projectName"
 							},
-							"GitHubActionFunction"
+							"GitHubActionStagingFunction"
+						]
+					]
+				},
+				"Handler": "index.handler",
+				"Role": {
+					"Fn::GetAtt": [
+						"GitHubActionServiceRole",
+						"Arn"
+					]
+				},
+				"Code": {
+					"S3Bucket": "piloteers-resources",
+					"S3Key": "cloudformation/codepipeline-github-action.zip"
+				},
+				"Runtime": "nodejs6.10",
+				"Timeout": 120,
+				"Environment": {
+					"Variables": {
+						"GITHUB_REPO_OWNER": {
+							"Ref": "gitHubRepoOwner"
+						},
+						"GITHUB_REPO": {
+							"Ref": "gitHubRepo"
+						},
+						"GITHUB_SOURCE_BRANCH": {
+							"Ref": "testingBranch"
+						},
+						"GITHUB_DEST_BRANCH": {
+							"Ref": "stagingBranch"
+						},
+						"GITHUB_OAUTH": {
+							"Ref": "gitHubToken"
+						}
+					}
+				}
+			}
+		},
+		"GitHubActionProductionFunction": {
+			"Condition": "PullRequestAfterDeployProduction",
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+				"FunctionName": {
+					"Fn::Join": [
+						"-",
+						[
+							{
+								"Ref": "projectName"
+							},
+							"GitHubActionProductionFunction"
 						]
 					]
 				},
