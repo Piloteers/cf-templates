@@ -9,6 +9,7 @@
     "buildspec.yml": "buildspec.yml",
     "infrastructure": {
       "cf": {
+        "configTesting.json": "configTesting.json",
         "configStaging.json": "configStaging.json",
         "configProduction.json": "configProduction.json",
         "apiDefinition.json": "apiDefinition.json"
