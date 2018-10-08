@@ -897,6 +897,7 @@
 		},
 		"StagingCodePipeline": {
 			"Type": "AWS::CodePipeline::Pipeline",
+			"Condition": "PullRequestAfterDeployStaging",
 			"Properties": {
 				"Name": {
 					"Fn::Join": [
