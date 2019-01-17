@@ -5,7 +5,12 @@
 		"projectName": {
 			"Type": "String",
 			"Description": "The name of the project being built. This name will be used on a number of resources."
-		},
+        },
+        "githubSecret": {
+			"Type": "String",
+			"Description": "This is the secret for the webhook",
+            "Default": "SECRETXXXX"
+        },
 		"gitHubToken": {
 			"Type": "AWS::SSM::Parameter::Value<String>",
 			"Description": "GitHub oauth token. This user must have admin access to the repo.",
@@ -69,7 +74,7 @@
 				"Authentication": "GITHUB_HMAC",
 				"AuthenticationConfiguration": {
 					"SecretToken": {
-						"Ref": "gitHubToken"
+						"Ref": "githubSecret"
 					}
 				},
 				"Filters": [
@@ -98,7 +103,7 @@
 				"Authentication": "GITHUB_HMAC",
 				"AuthenticationConfiguration": {
 					"SecretToken": {
-						"Ref": "gitHubToken"
+						"Ref": "githubSecret"
 					}
 				},
 				"Filters": [
@@ -127,7 +132,7 @@
 				"Authentication": "GITHUB_HMAC",
 				"AuthenticationConfiguration": {
 					"SecretToken": {
-						"Ref": "gitHubToken"
+						"Ref": "githubSecret"
 					}
 				},
 				"Filters": [
