@@ -1,0 +1,144 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Transform": "AWS::Serverless-2016-10-31",
+    "Description": "Sample GraphQL backend",
+    "Parameters": {
+        "apiId": {
+            "Type": "String",
+            "Description": "Your api name",
+            "Default": {
+                "Ref": "apiId"
+            }
+        },
+        "stage": {
+            "Type": "String",
+            "Description": "Your stage of development",
+            "Default": {
+                "Ref": "stage"
+            }
+        }
+    },
+    "Resources": {
+        "GraphQLApi": {
+            "Type": "AWS::AppSync::GraphQLApi",
+            "Description": "Awsmagic template API",
+            "Properties": {
+                "AuthenticationType": "API_KEY",
+                "Name": {
+                    "Fn::Sub": "${apiId}-${stage}"
+                }
+            }
+        },
+        "GraphQLApiKey": {
+            "Type": "AWS::AppSync::ApiKey",
+            "Properties": {
+                "Description": "Api key to make basic requests",
+                "ApiId": {
+                    "Fn::GetAtt": [
+                        "GraphQLApi",
+                        "ApiId"
+                    ]
+                }
+            }
+        },
+        "SampleDataSource": {
+            "Type": "AWS::AppSync::DataSource",
+            "Properties": {
+                "Type": "NONE",
+                "Description": "A data source that returns sample request",
+                "ApiId": {
+                    "Fn::GetAtt": [
+                        "GraphQLApi",
+                        "ApiId"
+                    ]
+                },
+                "Name": "identity"
+            }
+        },
+        "SampleQueryResolver": {
+            "Type": "AWS::AppSync::Resolver",
+            "DependsOn": "Schema",
+            "Properties": {
+                "ApiId": {
+                    "Fn::GetAtt": [
+                        "GraphQLApi",
+                        "ApiId"
+                    ]
+                },
+                "TypeName": "Query",
+                "FieldName": "identity",
+                "DataSourceName": {
+                    "Fn::GetAtt": [
+                        "SampleDataSource",
+                        "Name"
+                    ]
+                },
+                "RequestMappingTemplate": "{\n  \"version\": \"2017-02-28\",\n  \"payload\": {\n  \"hello\": \"local\",\n  }\n}\n",
+                "ResponseMappingTemplate": "$util.toJson($context.result)\n"
+            }
+        },
+        "SampleMutationResolver": {
+            "Type": "AWS::AppSync::Resolver",
+            "DependsOn": "Schema",
+            "Properties": {
+                "ApiId": {
+                    "Fn::GetAtt": [
+                        "GraphQLApi",
+                        "ApiId"
+                    ]
+                },
+                "TypeName": "Mutation",
+                "FieldName": "identity",
+                "DataSourceName": {
+                    "Fn::GetAtt": [
+                        "SampleDataSource",
+                        "Name"
+                    ]
+                },
+                "RequestMappingTemplate": "{\n  \"version\": \"2017-02-28\",\n  \"payload\": {\n  \"hello\": \"local\",\n  }\n}\n",
+                "ResponseMappingTemplate": "$util.toJson($context.result)\n"
+            }
+        },
+        "Schema": {
+            "Type": "AWS::AppSync::GraphQLSchema",
+            "Properties": {
+                "ApiId": {
+                    "Fn::GetAtt": [
+                        "GraphQLApi",
+                        "ApiId"
+                    ]
+                },
+                "Definition": "type Query {\n  identity: String\n}\ntype Mutation {\n  identity: String\n}\nschema {\n  query: Query\n  mutation: Mutation\n}\n"
+            }
+        }
+    },
+    "Outputs": {
+        "GraphQLApiEndpoint": {
+            "Description": "The URL for the GraphQL endpoint.",
+            "Value": {
+                "Fn::GetAtt": [
+                    "GraphQLApi",
+                    "GraphQLUrl"
+                ]
+            }
+        },
+        "GraphQLApiId": {
+            "Description": "The App ID of the GraphQL endpoint.",
+            "Value": {
+                "Fn::GetAtt": [
+                    "GraphQLApi",
+                    "ApiId"
+                ]
+            }
+        },
+        "GraphQLApiKey": {
+            "Description": "The key is valid for 7 days",
+            "Value": {
+                "Fn::GetAtt": [
+                    "GraphQLApiKey",
+                    "ApiKey"
+                ]
+            }
+        }
+    }
+}
