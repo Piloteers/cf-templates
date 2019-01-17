@@ -1,8 +1,0 @@
-{
-  "Parameters" : {
-    "stage": "production",
-    "apiId": "TODO"
-  },
-  "Tags" : {}, 
-  "StackPolicy" : {}
-}

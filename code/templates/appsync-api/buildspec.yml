@@ -5,10 +5,10 @@ phases:
       - npm install || (cat /root/.npm/_logs/*-debug.log && false)
   pre_build:
     commands:
-      - npm run lint
+      #- npm run lint
   build:
     commands:
-      - npm run build
+      #- npm run build
   post_build:
     commands:
       # env var BUILD_ARTIFACT_BUCKET is defined in ci

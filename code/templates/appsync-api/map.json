@@ -1,21 +1,9 @@
 {
   "folderStructure": {
     ".gitignore": ".gitignore",
-    "buildspec.yml": "buildspec.yml",
-    "infrastructure": {
-      "cf": {
-        "configTesting.json": "configTesting.json",
-        "configStaging.json": "configStaging.json",
-        "configProduction.json": "configProduction.json"
-      }
-    }
+    "buildspec.yml": "buildspec.yml"
   },
   "runtimePackages": {},
-  "scripts": {
-		"prebuild": "node prebuild.js",
-		"build": "webpack",
-		"clean": "rm -rf ./dist",
-		"lint": "eslint \"src/**/*.js\""
-	},
+  "scripts": {},
   "functions": {}
 }

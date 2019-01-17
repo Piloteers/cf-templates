@@ -5,11 +5,13 @@
     "Parameters": {
         "apiId": {
             "Type": "String",
-            "Description": "Your api name"
+            "Description": "Your api name",
+            "Default": "001Bootstrap"
         },
         "stage": {
             "Type": "String",
-            "Description": "Your stage of development"
+            "Description": "Your stage of development",
+            "Default": "develop"
         }
     },
     "Resources": {
