@@ -1,53 +1,16 @@
 {
   "folderStructure": {
-    "webpack.config.js": "webpack.config.js",
-    ".babelrc": ".babelrc",
-    ".eslintrc.json": ".eslintrc.json",
     ".gitignore": ".gitignore",
-    "prebuild.js": "prebuild.js",
-    ".eslintignore": ".eslintignore",
     "buildspec.yml": "buildspec.yml",
     "infrastructure": {
       "cf": {
         "configTesting.json": "configTesting.json",
         "configStaging.json": "configStaging.json",
-        "configProduction.json": "configProduction.json",
-        "apiDefinition.json": "apiDefinition.json"
-      }
-    },
-    "src": {
-      "lib": {
-        ".gitkeep": ".gitkeep"
-      },
-      "helper": {
-        ".gitkeep": ".gitkeep",
-        "RestHelper.js": "RestHelper.js"
-      },
-      "model": {
-        ".gitkeep": ".gitkeep"
-      },
-      "functions": {
-        ".gitkeep": ".gitkeep",
-        "swagger": {
-          "index.js": "function-swagger-index.js"
-        }
+        "configProduction.json": "configProduction.json"
       }
     }
   },
   "runtimePackages": {},
-  "devPackages": {
-    "babel-core": "^6.26.0",
-		"babel-eslint": "^7.2.3",
-		"babel-loader": "^7.1.4",
-    "babel-plugin-transform-async-to-generator": "^6.24.1",
-		"babel-preset-env": "^1.6.1",
-		"eslint": "^4.16.0",
-		"eslint-config-airbnb-base": "^12.1.0",
-		"eslint-plugin-import": "^2.8.0",
-    "webpack": "~4.1.1",
-    "webpack-cli": "~2.1.3",
-    "zip-webpack-plugin": "^3.0.0"
-  },
   "scripts": {
 		"prebuild": "node prebuild.js",
 		"build": "webpack",
