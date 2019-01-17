@@ -63,6 +63,93 @@
 		}
 	},
 	"Resources": {
+		"ProductionCodePipelineWebhook": {
+			"Type": "AWS::CodePipeline::Webhook",
+			"Properties": {
+				"Authentication": "GITHUB_HMAC",
+				"AuthenticationConfiguration": {
+					"SecretToken": {
+						"Ref": "gitHubToken"
+					}
+				},
+				"Filters": [
+					{
+						"JsonPath": "$.ref",
+						"MatchEquals": "refs/heads/{Branch}"
+					}
+				],
+				"TargetPipeline": {
+					"Ref": "ProductionCodePipeline"
+				},
+				"TargetAction": "Source",
+				"Name": "ProductionCodePipelineWebhook",
+				"TargetPipelineVersion": {
+					"Fn::GetAtt": [
+						"ProductionCodePipeline",
+						"Version"
+					]
+				},
+				"RegisterWithThirdParty": true
+			}
+		},
+		"TestingCodePipelineWebhook": {
+			"Type": "AWS::CodePipeline::Webhook",
+			"Properties": {
+				"Authentication": "GITHUB_HMAC",
+				"AuthenticationConfiguration": {
+					"SecretToken": {
+						"Ref": "gitHubToken"
+					}
+				},
+				"Filters": [
+					{
+						"JsonPath": "$.ref",
+						"MatchEquals": "refs/heads/{Branch}"
+					}
+				],
+				"TargetPipeline": {
+					"Ref": "TestingCodePipeline"
+				},
+				"TargetAction": "Source",
+				"Name": "TestingCodePipelineWebhook",
+				"TargetPipelineVersion": {
+					"Fn::GetAtt": [
+						"TestingCodePipeline",
+						"Version"
+					]
+				},
+				"RegisterWithThirdParty": true
+			}
+		},
+		"StagingCodePipelineWebhook": {
+			"Type": "AWS::CodePipeline::Webhook",
+			"Properties": {
+				"Authentication": "GITHUB_HMAC",
+				"AuthenticationConfiguration": {
+					"SecretToken": {
+						"Ref": "gitHubToken"
+					}
+				},
+				"Filters": [
+					{
+						"JsonPath": "$.ref",
+						"MatchEquals": "refs/heads/{Branch}"
+					}
+				],
+				"TargetPipeline": {
+					"Ref": "StagingCodePipeline"
+				},
+				"TargetAction": "Source",
+				"Name": "StagingCodePipelineWebhook",
+				"TargetPipelineVersion": {
+					"Fn::GetAtt": [
+						"StagingCodePipeline",
+						"Version"
+					]
+				},
+				"RegisterWithThirdParty": true
+			}
+		},
 		"DeploymentArtifactBucket": {
 			"Type": "AWS::S3::Bucket",
 			"DeletionPolicy": "Delete",
@@ -722,7 +809,8 @@
 									},
 									"OAuthToken": {
 										"Ref": "gitHubToken"
-									}
+									},
+									"PollForSourceChanges": false
 								},
 								"RunOrder": 1
 							}
@@ -946,7 +1034,8 @@
 									},
 									"OAuthToken": {
 										"Ref": "gitHubToken"
-									}
+									},
+									"PollForSourceChanges": false
 								},
 								"RunOrder": 1
 							}
@@ -1170,7 +1259,8 @@
 									},
 									"OAuthToken": {
 										"Ref": "gitHubToken"
-									}
+									},
+									"PollForSourceChanges": false
 								},
 								"RunOrder": 1
 							}
