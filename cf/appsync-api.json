@@ -5,17 +5,11 @@
     "Parameters": {
         "apiId": {
             "Type": "String",
-            "Description": "Your api name",
-            "Default": {
-                "Ref": "apiId"
-            }
+            "Description": "Your api name"
         },
         "stage": {
             "Type": "String",
-            "Description": "Your stage of development",
-            "Default": {
-                "Ref": "stage"
-            }
+            "Description": "Your stage of development"
         }
     },
     "Resources": {
