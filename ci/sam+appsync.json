@@ -8,7 +8,7 @@
 		},
 		"gitHubSecret": {
 			"Type": "AWS::SSM::Parameter::Value<String>",
-			"Description": "This is the secret for the webhook",
+			"Description": "Github secret for the webhook. This user must have admin access to the repository.",
 			"NoEcho": true
 		},
 		"gitHubToken": {
