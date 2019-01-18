@@ -1,0 +1,8 @@
+{
+  "Parameters" : {
+    "stage": "testing",
+    "apiId": "TODO"
+  },
+  "Tags" : {}, 
+  "StackPolicy" : {}
+}
