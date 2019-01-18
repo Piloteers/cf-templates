@@ -6,7 +6,7 @@
         "apiId": {
             "Type": "String",
             "Description": "Your api name",
-            "Default": "001Bootstrap"
+            "Default": "Bootstrap"
         },
         "stage": {
             "Type": "String",
@@ -104,7 +104,7 @@
                         "ApiId"
                     ]
                 },
-                "Definition": "type Query {\n  identity: String\n}\ntype Mutation {\n  identity: String\n}\nschema {\n  query: Query\n  mutation: Mutation\n}\n"
+                "DefinitionS3Location": "./schema.graphql"
             }
         }
     },
